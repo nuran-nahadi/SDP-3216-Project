@@ -9,7 +9,9 @@
 | Layer | Description | Key Modules |
 | --- | --- | --- |
 | API Layer | FastAPI routers define HTTP endpoints, request validation, and dependency wiring. | `backend/app/routers/*.py`
-| Service Layer | Business logic, orchestration, and integration with external systems (e.g., AI). | `backend/app/services/*.py`
+| Facade Layer | Facades encapsulate end-to-end use cases, coordinating repositories, AI helpers, and response shaping. | `backend/app/facades/*.py`
+| Service Layer | Thin shims that preserve legacy imports while delegating to facades. | `backend/app/services/*.py`
+| Repository Layer | Data-access abstractions wrapping SQLAlchemy sessions with focused query helpers. | `backend/app/repositories/*.py`
 | Schema Layer | Pydantic models for request/response contracts and validation. | `backend/app/schemas/*.py`
 | Data Layer | SQLAlchemy models, database session management, migrations. | `backend/app/models/models.py`, `backend/app/db/database.py`, migration scripts in `backend/`
 | Core Utilities | Configuration, dependency toggles, security helpers, shared responses. | `backend/app/core/*`, `backend/app/utils/responses.py`
@@ -20,10 +22,10 @@
 2. **Routing**: Routers from `app.routers` are registered (auth, user profile, events, expenses, tasks, journal, users, accounts). Each router injects dependencies with FastAPI's `Depends` system.
 3. **Authentication**: `app.core.dependencies.get_current_user()` chooses between development or JWT-backed authentication depending on `settings.disable_auth`.
 4. **Request Handling**:
-   - Request payloads are coerced into Pydantic schemas (`app/schemas`).
-   - Router handlers call corresponding service methods, passing the database session (`app.db.database.get_db`) and authenticated `User` model instances.
-   - Services execute business rules, compose responses, and raise HTTP exceptions on error. Direct SQLAlchemy queries are used; there is no repository abstraction.
-5. **Persistence**: SQLAlchemy models defined in `app.models.models` map to PostgreSQL tables. The `SessionLocal` scoped session mediates transactions; commits/rollbacks happen inside service methods.
+  - Request payloads are coerced into Pydantic schemas (`app/schemas`).
+  - Routers resolve facade instances via dependency-injected helpers (for example `get_expense_facade`) alongside the database session (`app.db.database.get_db`) and authenticated `User` model instances.
+  - Facades execute business rules, orchestrate repository operations, and unify AI/analytics behaviour. Services persist as compatibility wrappers that simply forward to the facades.
+5. **Persistence**: SQLAlchemy models defined in `app.models.models` map to PostgreSQL tables. The `SessionLocal` scoped session mediates transactions; commits/rollbacks happen inside repository/facade workflows.
 6. **Response**: Service results are wrapped into structured responses adhering to schema definitions before returning to the client.
 
 ## Configuration & Environment
@@ -45,9 +47,9 @@
 - Database connection uses Supabase via SSL with pre-ping and connection recycling; credentials logged from `DATABASE_URL` (consider removing the `print`).
 
 ## Business Logic Layer
-- Each resource has a dedicated service (e.g., `app/services/events.py`, `app/services/tasks.py`, etc.).
-- Service pattern: static methods accept `(db: Session, user: User, ...)`, perform validation, and return dictionaries shaped for response models.
-- Event service includes advanced queries (calendar aggregation, tag filtering) and AI-assisted parsing.
+- Expense and Event domains now expose facades (`app/facades/expense_facade.py`, `app/facades/event_facade.py`) that centralize validation, repository usage, dashboard analytics, and AI parsing while presenting a simplified interface to routers.
+- Repository classes (`app/repositories/expense_repository.py`, `app/repositories/event_repository.py`) wrap SQLAlchemy sessions with focused query helpers (filters, summaries, calendar views) to keep facades thin.
+- Services remain for backward compatibility with prior imports but simply resolve and delegate to the appropriate facade.
 - `app/services/ai_service.py` encapsulates Gemini interactions for expenses, tasks, and events using text, voice, and image inputs. It handles prompt construction, transcription (SpeechRecognition + pydub), image parsing (Pillow), and JSON extraction.
 
 ## API Surface
@@ -64,9 +66,9 @@
 - **Shell tools**: `backend/setup_ai.sh` installs dependencies required for AI features on macOS/Linux.
 
 ## Observations & Constraints
-- Services operate synchronously even when wrapping async AI calls (mix of sync/async in `events` service); future refactoring may be needed for consistent async handling.
+- Facade/repository pairing currently covers expenses and events; extending the approach to tasks, journals, and accounts would standardize orchestration across the API surface.
+- Services operate synchronously even when wrapping async AI calls (mix of sync/async in `events` paths); consider aligning async behaviour inside facades.
 - Direct `create_all` on import simplifies first-run setup but is unsafe for production migrations; consider Alembic or managed migrations.
-- No domain-level abstraction between services and SQLAlchemy models; upcoming pattern work may introduce repositories, factories, or strategies.
 - The `disable_auth` flag provides a convenient development mode but must be controlled in production deployments.
 - Logging around AI services leverages Python `logging`; broader application logging strategy is minimal.
 
@@ -83,5 +85,6 @@
 - AI features rely on live external services; tests may require valid API keys and network connectivity.
 
 ## Next Steps for Pattern Introduction
-- Identify cross-cutting concerns (e.g., error handling, transaction management) that could benefit from design patterns (Factory, Strategy, Adapter) without disrupting current layering.
-- Evaluate areas where synchronous service methods should become async or use patterns to isolate I/O-heavy AI integrations.
+- Continue rolling the facade/repository pattern to remaining aggregates (tasks, journals, accounts) to keep router logic consistent.
+- Identify cross-cutting concerns (e.g., error handling, transaction management) that could benefit from additional patterns (Factory, Strategy, Adapter) without disrupting the new layering.
+- Evaluate areas where synchronous facade methods should become async or use patterns to isolate I/O-heavy AI integrations.
