@@ -1,0 +1,162 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xurl}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\setlist{nosep}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+
+\title{CSE 3216 Project Proposal\\
+LIN — Design Pattern Driven Evolution of a Personal Life Manager}
+\author{\textbf{Team Coupe}\\[0.5em]
+Shahriar Hossen Fahim (12)\\
+Nahin Ehsan Nilav (31)\\
+Md. Nuran Nahadi Islam (38)
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Title}
+LIN
+
+\section{Partner Information}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|m{4.8cm}|m{1.8cm}|X|}
+\hline
+\textbf{Name} & \textbf{Roll} & \textbf{Email} \\
+\hline
+Shahriar Hossen Fahim & 12 & \url{shahriarhossen-2021611188@cs.du.ac.bd} \\
+\hline
+Nahin Ehsan Nilav & 31 & \url{nahinehsan-2021411207@cs.du.ac.bd} \\
+\hline
+Md. Nuran Nahadi Islam & 38 & \url{mdnurannahadi-2021611214@cs.du.ac.bd} \\
+\hline
+\end{tabularx}
+
+\section{Introduction}
+LIN is a unified web application that helps users track and reflect on daily life activities, such as tasks, events, expenses, and journals, with AI-assisted input and insights. The original system includes a FastAPI backend (Python), a React + Tailwind frontend, PostgreSQL (Supabase), and optional AI features (Google Gemini).
+
+This project aims to \emph{evolve} LIN by systematically applying software design principles and common design patterns to improve maintainability, testability, extensibility, and overall quality without rewriting from scratch.
+
+\subsection*{Motivating examples for design patterns}
+\begin{itemize}
+    \item \textbf{Strategy}: Swap AI providers or parsing algorithms for expenses, tasks, and events without touching routing or business logic.
+    \item \textbf{Observer}: Emit domain events (task completed, expense added, event created) to trigger notifications, dashboard updates, or AI insights without tight coupling.
+    \item \textbf{Visitor}: Apply cross-cutting operations (export, analytics, summarization) over heterogeneous models (Task, Event, Expense, Journal) via \texttt{accept(visitor)}.
+    \item \textbf{Factory}: Centralize service, parser, and notification creation (e.g., \texttt{ServiceFactory}, \texttt{ParserFactory}) to avoid scattered instantiation and simplify testing.
+    \item \textbf{DTO}: Leverage and extend existing Pydantic schemas as explicit boundary contracts for requests and responses, decoupling persistence models from API payloads.
+    \item \textbf{Singleton}: Ensure single instances for configuration, database engine manager, and AI service clients to reduce overhead and guarantee consistent state.
+\end{itemize}
+
+\section{Project Objectives (SMART)}
+\begin{itemize}
+    \item \textbf{O1 (Maintainability)}: Introduce at least \textbf{6} design patterns (Strategy, Observer, Visitor, Factory, DTO, Singleton) with unit tests across core modules.
+    \item \textbf{O2 (Testability)}: Increase backend unit test coverage on services utilizing new patterns.
+    \item \textbf{O3 (Extensibility)}: Enable pluggable AI parsing strategies (text, image, audio) such that swapping providers requires \textbf{$\leq$ 2 files} changed.
+    \item \textbf{O4 (Reliability)}: Add domain events and observers for tasks, events, and expenses, achieving \textbf{$\leq$ 1s} end-to-end latency for in-app notifications locally6.
+    \item \textbf{O5 (Quality)}: Reduce code duplication in the services layer (via factory or strategy extraction) by measuring with static analysis.
+\end{itemize}
+
+\section{Software Development Methodology}
+\textbf{Agile (Scrum/Kanban hybrid) with Iterative Refactoring and Trunk-Based Development.}
+
+Given a mostly-built codebase, we will iterate in short sprints that each:
+(1) introduce or refactor a targeted pattern,
+(2) add tests, and
+(3) verify no regression in behavior.
+
+\subsection*{Why this fits}
+\begin{itemize}
+    \item We need incremental, safe refactors rather than a big-bang rewrite.
+    \item Patterns can be introduced feature by feature while delivering continuous value.
+    \item Trunk-based development with small feature branches and feature flags ensures regular merging and fast feedback.
+\end{itemize}
+
+\subsection*{Practices}
+\begin{itemize}
+    \item 1-week sprints; daily async standups; weekly demo.
+    \item Design spikes for each pattern before implementation (short technical notes).
+    \item Definition of Done: pattern implemented, tests written, documentation updated, and performance or behavior unchanged for existing APIs.
+    \item CI checks: lint, type checks, tests, and basic performance smoke tests.
+\end{itemize}
+
+\section{Scope of the Project}
+\subsection*{Functional Requirements}
+\begin{itemize}
+    \item Track expenses: CRUD, categories, payment methods, insights, and dashboards.
+    \item Manage tasks: CRUD, priorities, deadlines, completion status, reminders.
+    \item AI-assisted input: natural-language parsing for adding records (text, image, audio).
+    \item Authentication and profiles: JWT auth, user preferences.
+    \item Notifications and observers: in-app signals for key domain events.
+    \item Export and analytics: apply Visitor to produce reports across entities.
+\end{itemize}
+
+\newpage
+\subsection*{Non-Functional Requirements}
+\begin{itemize}
+    \item Maintainability via patterns and module boundaries with documented interfaces.
+    \item Test coverage $\geq$ 75\% across refactored modules with fast local runs.
+    \item Security: JWT-based auth, safe file uploads, sanitized inputs.
+    \item Performance: p95 API latency $<$ 300ms locally for core CRUD, background jobs for heavier analytics.
+    \item Reliability: idempotent operations, DB transactions, safe retries on transient failures.
+    \item Observability: structured logs, request tracing at service boundaries.
+\end{itemize}
+
+\subsection*{Limitations/Constraints}
+\begin{itemize}
+    \item Third-party services (Supabase, Cloudinary, Gemini/OpenAI) impose quotas and latency variability.
+    \item Browser-only clients (web platform), no native mobile clients in scope.
+    \item Backward compatibility: public API behavior should not regress during refactors.
+\end{itemize}
+
+\section{Technical Details}
+\subsection*{Platform}
+Web application (React frontend, FastAPI backend).
+
+\subsection*{Stacks}
+\begin{itemize}
+    \item \textbf{Backend}: Python, FastAPI, SQLAlchemy, Pydantic, PostgreSQL (Supabase), CORS
+    \item \textbf{Frontend}: React, TailwindCSS
+    \item \textbf{AI (optional)}: Google Gemini 
+\end{itemize}
+
+\subsection*{Key Architectural Evolutions (Patterns)}
+\begin{itemize}
+    \item \textbf{Strategy}: Abstract AI parsing with \texttt{AIProcessingStrategy} (Gemini, OpenAI, Local) used by a context service.
+    \item \textbf{Observer}: \texttt{DomainEventBus} with observers for notifications, analytics refresh, and audit logs.
+    \item \textbf{Visitor}: \texttt{DataVisitor} for export and analytics processing across Task, Event, Expense, and Journal models.
+    \item \textbf{Factory}: \texttt{ServiceFactory}, \texttt{ParserFactory}, \texttt{NotificationFactory} to centralize object creation.
+    \item \textbf{DTO}: Extend Pydantic schemas as boundary-specific DTOs (e.g., \texttt{DashboardDTO}) decoupled from ORM models.
+    \item \textbf{Singleton}: \texttt{Settings}, \texttt{DatabaseManager}, and \texttt{AIClientPool} as singletons.
+\end{itemize}
+
+\newpage
+\subsection*{Constraints}
+\begin{itemize}
+    \item Python 3.x, Node.js LTS; compatibility with Windows development environment.
+    \item External API keys and configuration via environment variables.
+    \item Supabase requires SSL DB connections; network access constraints in campus environments may apply.
+\end{itemize}
+
+\section{Timeline (2 Months)}
+\begin{itemize}
+    \item \textbf{Week 1}: Requirements review, hotspot identification, finalize pattern mapping, baseline tests.
+    \item \textbf{Week 2}: Introduce AI Strategy abstraction and refine DTOs, swap in Gemini via strategy, add tests and documentation.
+    \item \textbf{Week 3}: Implement factories for services, parsers, and notifications, reduce direct instantiation, refactor wiring, add tests.
+    \item \textbf{Week 4}: Extend factory and strategy integration, ensure pluggability of AI providers, refine DTOs, static analysis checks.
+    \item \textbf{Week 5}: Add Domain Event Bus and observers for tasks, events, and expenses, integrate with dashboards and notifications, add tests.
+    \item \textbf{Week 6}: Implement Visitors for export and analytics across entities, provide CLI/endpoint trigger, performance checks, add tests.
+    \item \textbf{Week 7}: Implement Singleton pattern for settings, DB, and AI clients, remove duplication, add coverage improvements.
+    \item \textbf{Week 8}: Final hardening, ensure test coverage, documentation updates, quality checks, final demo preparation.
+\end{itemize}
+
+\section{Conclusion}
+We intend to extend the LIN web application by applying core software design patterns to elevate code quality and sustainability while preserving existing functionality. The Agile, iterative approach minimizes risk and ensures continuous delivery of improvements. The outcome will be a cleaner, more testable, and future-ready architecture that supports fast feature development and robust AI-assisted experiences.
+
+\end{document}

@@ -1,0 +1,42 @@
+CSE 3216: Project Proposal Template
+
+1. Title
+ A concise and descriptive title for the project. Also try to give a small and lucrative
+naming of your project. 
+2. Partner Information
+ Give rolls, emails and names of your partners 
+3. Introduction
+ An introductory section that explains the purpose of the proposal and the project&#39;s
+importance. Give motivating examples why this project will be useful in real life
+scenarios. Give some examples to show where the design patterns might be required in
+your project to improve the quality of the design/codebase. 
+4. Project Objectives
+ Enumerate Specific, Measurable, Achievable, Relevant, and Time-bound (SMART)
+objectives of the project. 
+5. Software Development Methodology
+ Discuss which type of software development process you are thinking to execute
+(E.g., Agile, waterfall, Spiral, etc.). Identify some possible scenarios based on your
+project that you are thinking to encounter. 
+6. Scope of the Project
+- Identify the functional requirements of the project
+- Identify the non-functional requirements of the project
+- Identify the possible limitations/constraints of the project
+
+7. Technical Details
+- Specify which platform (Web/Mobile/Software) you are choosing to complete the
+project
+
+2
+- Specify your stacks - Programming languages, frameworks or any supporting
+entity that you are planning to use
+- Identify any hardware(Device, Computation Power, etc.) or software
+constraints(Third Party libraries, specific library versions, operating system
+versions. etc.) that your project might require.
+
+8. Timeline
+ A possible timeline to complete various key milestones of your project. Try to
+formulate the design thinking for at most 3 months. They should included - requirement
+analysis phase, design phase, implementation phase, testing phase. 
+9. Conclusion
+ Some concluding remarks over the overall points that you have written in this
+submission 
