@@ -1,7 +1,0 @@
-DATABASE_URL = "postgresql+asyncpg://sdpuser<PASSWORD>@db.fahiim.me:3001/sdp-lab" 
-(asyncpg)
-
-DATABASE_URL = "postgresql://sdpuser:<PASSWORD>@db.fahiim.me:3001/sdp-lab"
-(sqlalchemy)
-
-PASSWORD=3GPQ3u451pf1WRJ
