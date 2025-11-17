@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Debug script to test failing Events API endpoints and get detailed error info
+Debug script to test failing Journal API endpoints and get detailed error info
 """
 
 import requests
 import json
-from datetime import datetime
 
 # Configuration
 BASE_URL = "http://localhost:8000"
@@ -13,15 +12,17 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY0YzkyMjVmLTFlYWE
 
 headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
-def test_endpoint(name, url, method="GET", data=None):
+def test_endpoint(name, url, method="GET", data=None, params=None):
     """Test an endpoint and show detailed error information"""
     print(f"\n=== Testing {name} ===")
     print(f"URL: {url}")
     print(f"Method: {method}")
+    if params:
+        print(f"Params: {params}")
     
     try:
         if method == "GET":
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, params=params)
         elif method == "POST":
             response = requests.post(url, json=data, headers=headers)
         
@@ -43,19 +44,15 @@ def test_endpoint(name, url, method="GET", data=None):
 
 # Test the failing endpoints
 if __name__ == "__main__":
-    print("🔍 Debug Events API - Testing Failing Endpoints")
+    print("🔍 Debug Journal API - Testing Failing Endpoints")
     
-    # 1. Test get all events (Status 500)
-    test_endpoint("Get All Events", f"{BASE_URL}/events/")
+    # 1. Test journal statistics (Status 422)
+    test_endpoint("Journal Statistics", f"{BASE_URL}/journal/stats")
     
-    # 2. Test calendar view (Status 500)
-    now = datetime.now()
-    test_endpoint("Calendar View", f"{BASE_URL}/events/calendar/{now.year}/{now.month}")
+    # 2. Test mood trends (Status 422)
+    test_endpoint("Mood Trends", f"{BASE_URL}/journal/mood-trends", params={"days": 7})
     
-    # 3. Test upcoming events (Status 422)
-    test_endpoint("Upcoming Events", f"{BASE_URL}/events/upcoming")
-    
-    # 4. Test with query parameters
-    test_endpoint("Upcoming Events with days=7", f"{BASE_URL}/events/upcoming?days=7")
+    # 3. Test mood trends without parameters
+    test_endpoint("Mood Trends (no params)", f"{BASE_URL}/journal/mood-trends")
     
     print("\n🎉 Debug complete!")
