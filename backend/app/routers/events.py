@@ -81,6 +81,61 @@ def create_event(
 
 
 @router.get(
+    "/upcoming",
+    status_code=status.HTTP_200_OK,
+    response_model=EventsResponse,
+    summary="Get upcoming events",
+    description="Get upcoming events for the next 7 days"
+)
+def get_upcoming_events(
+    days: int = Query(7, ge=1, le=30, description="Number of days to look ahead"),
+    facade: EventFacade = Depends(get_event_facade)
+):
+    """Get upcoming events for the next N days"""
+    try:
+        result = facade.get_upcoming_events(days)
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Upcoming events retrieved successfully",
+            "meta": result["meta"]
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve upcoming events: {str(e)}"
+        )
+
+
+@router.get(
+    "/calendar/{year}/{month}",
+    status_code=status.HTTP_200_OK,
+    response_model=CalendarResponse,
+    summary="Get calendar view",
+    description="Get calendar view for a specific month"
+)
+def get_calendar_view(
+    year: int = Path(..., ge=1900, le=3000, description="Year"),
+    month: int = Path(..., ge=1, le=12, description="Month"),
+    facade: EventFacade = Depends(get_event_facade)
+):
+    """Get calendar view for a specific month"""
+    try:
+        result = facade.get_calendar_view(year, month)
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Calendar view retrieved successfully",
+            "meta": {"timestamp": datetime.utcnow()}
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve calendar view: {str(e)}"
+        )
+
+
+@router.get(
     "/{event_id}",
     status_code=status.HTTP_200_OK,
     response_model=EventResponse,
@@ -143,47 +198,7 @@ def delete_event(
     }
 
 
-@router.get(
-    "/calendar/{year}/{month}",
-    status_code=status.HTTP_200_OK,
-    response_model=CalendarResponse,
-    summary="Get calendar view",
-    description="Get calendar view for a specific month"
-)
-def get_calendar_view(
-    year: int = Path(..., ge=1900, le=3000, description="Year"),
-    month: int = Path(..., ge=1, le=12, description="Month"),
-    facade: EventFacade = Depends(get_event_facade)
-):
-    """Get calendar view for a specific month"""
-    result = facade.get_calendar_view(year, month)
-    return {
-        "success": True,
-        "data": result["data"],
-        "message": "Calendar view retrieved successfully",
-        "meta": {"timestamp": datetime.utcnow()}
-    }
 
-
-@router.get(
-    "/upcoming",
-    status_code=status.HTTP_200_OK,
-    response_model=EventsResponse,
-    summary="Get upcoming events",
-    description="Get upcoming events for the next 7 days"
-)
-def get_upcoming_events(
-    days: int = Query(7, ge=1, le=30, description="Number of days to look ahead"),
-    facade: EventFacade = Depends(get_event_facade)
-):
-    """Get upcoming events for the next N days"""
-    result = facade.get_upcoming_events(days)
-    return {
-        "success": True,
-        "data": result["data"],
-        "message": "Upcoming events retrieved successfully",
-        "meta": result["meta"]
-    }
 
 
 @router.post(

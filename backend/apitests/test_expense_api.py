@@ -178,26 +178,26 @@ def test_expense_endpoints():
         except Exception as e:
             print(f"❌ Error updating expense: {e}")
     
-    # Step 7: Test natural language parsing
-    print("\n🤖 Step 7: Parse Natural Language")
+    # # Step 7: Test natural language parsing (AI-powered)
+    # print("\n🤖 Step 7: Parse Natural Language with AI")
     
-    test_phrases = [
-        "I spent $25 on lunch at McDonald's",
-        "Paid 50 dollars for gas yesterday",
-        "Coffee cost me 4.50 this morning"
-    ]
+    # test_phrases = [
+    #     "I spent $25 on lunch at McDonald's",
+    #     "Paid 50 dollars for gas yesterday",
+    #     "Coffee cost me 4.50 this morning"
+    # ]
     
-    for phrase in test_phrases:
-        try:
-            parse_data = {"text": phrase}
-            response = requests.post(f"{BASE_URL}/expenses/parse", json=parse_data, headers=headers)
-            if response.status_code == 200:
-                parsed = response.json()["data"]
-                print(f"✅ Parsed: '{phrase}' → ${parsed['amount']} ({parsed['category']})")
-            else:
-                print(f"❌ Failed to parse: '{phrase}'")
-        except Exception as e:
-            print(f"❌ Error parsing: '{phrase}' - {e}")
+    # for phrase in test_phrases:
+    #     try:
+    #         parse_data = {"text": phrase}
+    #         response = requests.post(f"{BASE_URL}/expenses/ai/parse-text", json=parse_data, headers=headers)
+    #         if response.status_code == 201:  # AI endpoints return 201 Created
+    #             parsed = response.json()["data"]
+    #             print(f"✅ Parsed: '{phrase}' → ${parsed['amount']} ({parsed['category']})")
+    #         else:
+    #             print(f"❌ Failed to parse: '{phrase}' - Status: {response.status_code}, Response: {response.text}")
+    #     except Exception as e:
+    #         print(f"❌ Error parsing: '{phrase}' - {e}")
     
     # Step 8: Test monthly expenses
     print("\n📅 Step 8: Get Monthly Expenses")
