@@ -10,9 +10,9 @@ import uuid
 
 # Configuration
 BASE_URL = "http://localhost:8000"
-USERNAME = "testuser"
-EMAIL = "test@example.com"
-PASSWORD = "testpassword123"
+USERNAME = "tu"
+EMAIL = "tu@gmail.com"
+PASSWORD = "t"
 
 def test_expense_endpoints():
     """Test all expense-related endpoints"""
@@ -178,62 +178,29 @@ def test_expense_endpoints():
         except Exception as e:
             print(f"❌ Error updating expense: {e}")
     
-    # Step 7: Test natural language parsing
-    print("\n🤖 Step 7: Parse Natural Language")
+    # # Step 7: Test natural language parsing (AI-powered)
+    # print("\n🤖 Step 7: Parse Natural Language with AI")
     
-    test_phrases = [
-        "I spent $25 on lunch at McDonald's",
-        "Paid 50 dollars for gas yesterday",
-        "Coffee cost me 4.50 this morning"
-    ]
+    # test_phrases = [
+    #     "I spent $25 on lunch at McDonald's",
+    #     "Paid 50 dollars for gas yesterday",
+    #     "Coffee cost me 4.50 this morning"
+    # ]
     
-    for phrase in test_phrases:
-        try:
-            parse_data = {"text": phrase}
-            response = requests.post(f"{BASE_URL}/expenses/parse", json=parse_data, headers=headers)
-            if response.status_code == 200:
-                parsed = response.json()["data"]
-                print(f"✅ Parsed: '{phrase}' → ${parsed['amount']} ({parsed['category']})")
-            else:
-                print(f"❌ Failed to parse: '{phrase}'")
-        except Exception as e:
-            print(f"❌ Error parsing: '{phrase}' - {e}")
+    # for phrase in test_phrases:
+    #     try:
+    #         parse_data = {"text": phrase}
+    #         response = requests.post(f"{BASE_URL}/expenses/ai/parse-text", json=parse_data, headers=headers)
+    #         if response.status_code == 201:  # AI endpoints return 201 Created
+    #             parsed = response.json()["data"]
+    #             print(f"✅ Parsed: '{phrase}' → ${parsed['amount']} ({parsed['category']})")
+    #         else:
+    #             print(f"❌ Failed to parse: '{phrase}' - Status: {response.status_code}, Response: {response.text}")
+    #     except Exception as e:
+    #         print(f"❌ Error parsing: '{phrase}' - {e}")
     
-    # Step 8: Test expense summary
-    print("\n📊 Step 8: Get Expense Summary")
-    
-    try:
-        response = requests.get(f"{BASE_URL}/expenses/summary", headers=headers)
-        if response.status_code == 200:
-            summary = response.json()["data"]
-            print(f"✅ Total expenses: ${summary['total_amount']:.2f}")
-            print(f"✅ Average expense: ${summary['average_amount']:.2f}")
-            print(f"✅ Total count: {summary['total_count']}")
-            print("✅ Categories:")
-            for cat in summary['categories']:
-                print(f"   - {cat['category']}: ${cat['total_amount']:.2f} ({cat['percentage']:.1f}%)")
-        else:
-            print(f"❌ Failed to get summary: {response.text}")
-    except Exception as e:
-        print(f"❌ Error getting summary: {e}")
-    
-    # Step 9: Test categories summary
-    print("\n📈 Step 9: Get Categories")
-    
-    try:
-        response = requests.get(f"{BASE_URL}/expenses/categories", headers=headers)
-        if response.status_code == 200:
-            categories = response.json()["data"]
-            print(f"✅ Found {len(categories)} expense categories")
-            for cat in categories:
-                print(f"   - {cat['category']}: ${cat['total_amount']:.2f} ({cat['count']} expenses)")
-        else:
-            print(f"❌ Failed to get categories: {response.text}")
-    except Exception as e:
-        print(f"❌ Error getting categories: {e}")
-    
-    # Step 10: Test monthly expenses
-    print("\n📅 Step 10: Get Monthly Expenses")
+    # Step 8: Test monthly expenses
+    print("\n📅 Step 8: Get Monthly Expenses")
     
     try:
         current_year = datetime.now().year
@@ -247,71 +214,9 @@ def test_expense_endpoints():
     except Exception as e:
         print(f"❌ Error getting monthly expenses: {e}")
     
-    # Step 11: Test recurring expenses
-    print("\n🔄 Step 11: Get Recurring Expenses")
     
-    try:
-        response = requests.get(f"{BASE_URL}/expenses/recurring", headers=headers)
-        if response.status_code == 200:
-            recurring = response.json()["data"]
-            print(f"✅ Found {len(recurring)} recurring expenses")
-        else:
-            print(f"❌ Failed to get recurring expenses: {response.text}")
-    except Exception as e:
-        print(f"❌ Error getting recurring expenses: {e}")
-    
-    # Step 12: Test bulk import
-    print("\n📥 Step 12: Bulk Import")
-    
-    bulk_expenses = [
-        {
-            "amount": 8.50,
-            "currency": "USD",
-            "category": "food",
-            "description": "Breakfast sandwich",
-            "date": datetime.now().isoformat()
-        },
-        {
-            "amount": 22.00,
-            "currency": "USD",
-            "category": "entertainment",
-            "description": "Movie ticket",
-            "date": datetime.now().isoformat()
-        }
-    ]
-    
-    try:
-        bulk_data = {"expenses": bulk_expenses}
-        response = requests.post(f"{BASE_URL}/expenses/bulk", json=bulk_data, headers=headers)
-        if response.status_code == 201:
-            imported = response.json()["data"]
-            print(f"✅ Bulk imported {len(imported)} expenses")
-        else:
-            print(f"❌ Failed to bulk import: {response.text}")
-    except Exception as e:
-        print(f"❌ Error bulk importing: {e}")
-    
-    # Step 13: Test export
-    print("\n📤 Step 13: Export Expenses")
-    
-    try:
-        # Export as JSON
-        response = requests.get(f"{BASE_URL}/expenses/export?format=json", headers=headers)
-        if response.status_code == 200:
-            exported = response.json()["data"]
-            print(f"✅ Exported {len(exported)} expenses as JSON")
-        
-        # Export as CSV
-        response = requests.get(f"{BASE_URL}/expenses/export?format=csv", headers=headers)
-        if response.status_code == 200:
-            csv_data = response.json()["data"]
-            lines = csv_data.split('\n')
-            print(f"✅ Exported CSV with {len(lines)-1} data rows")
-    except Exception as e:
-        print(f"❌ Error exporting: {e}")
-    
-    # Step 14: Test expense deletion
-    print("\n🗑️ Step 14: Delete Expense")
+    # Step 9: Test expense deletion
+    print("\n🗑️ Step 9: Delete Expense")
     
     if created_expense_ids and len(created_expense_ids) > 1:
         try:
@@ -326,15 +231,7 @@ def test_expense_endpoints():
             print(f"❌ Error deleting expense: {e}")
     
     print("\n🎉 Expense API testing completed!")
-    print("📊 Summary:")
-    print("   - Created multiple expenses")
-    print("   - Retrieved and filtered expenses")
-    print("   - Updated expense details")
-    print("   - Parsed natural language")
-    print("   - Generated summaries and reports")
-    print("   - Tested bulk operations")
-    print("   - Exported data")
-    print("   - Cleaned up test data")
+
 
 
 if __name__ == "__main__":

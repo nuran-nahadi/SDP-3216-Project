@@ -11,11 +11,9 @@ from datetime import datetime, timedelta
 # Configuration
 BASE_URL = "http://localhost:8000"
 TEST_USER = {
-    "username": "journal_test_user",
-    "email": "journal@test.com",
-    "password": "test123456",
-    "first_name": "Journal",
-    "last_name": "Tester"
+    "username": "tu",
+    "email": "tu@gmail.com",
+    "password": "t"
 }
 
 

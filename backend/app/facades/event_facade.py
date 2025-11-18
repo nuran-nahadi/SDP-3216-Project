@@ -39,33 +39,63 @@ class EventFacade:
         page: int = 1,
         limit: int = 50,
     ) -> dict:
-        events, total = self._repository.list_events(
-            self._user.id,
-            start_date=start_date,
-            end_date=end_date,
-            tags=tags,
-            search=search,
-            page=page,
-            limit=limit,
-        )
+        try:
+            events, total = self._repository.list_events(
+                self._user.id,
+                start_date=start_date,
+                end_date=end_date,
+                tags=tags,
+                search=search,
+                page=page,
+                limit=limit,
+            )
 
-        data = []
-        for event in events:
-            event_dict = EventOut.model_validate(event).model_dump()
-            if isinstance(event.tags, str):
-                event_dict["tags"] = json.loads(event.tags) if event.tags else []
-            data.append(event_dict)
+            event_data = []
+            for event in events:
+                # Handle tags parsing safely
+                tags_parsed = []
+                if event.tags:
+                    try:
+                        if isinstance(event.tags, str):
+                            tags_parsed = json.loads(event.tags)
+                        elif isinstance(event.tags, list):
+                            tags_parsed = event.tags
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        tags_parsed = []
+                
+                event_dict = {
+                    "id": event.id,
+                    "user_id": event.user_id,
+                    "title": event.title,
+                    "description": event.description,
+                    "start_time": event.start_time,
+                    "end_time": event.end_time,
+                    "location": event.location,
+                    "tags": tags_parsed,
+                    "is_all_day": event.is_all_day,
+                    "reminder_minutes": event.reminder_minutes,
+                    "recurrence_rule": event.recurrence_rule,
+                    "color": event.color,
+                    "created_at": event.created_at,
+                    "updated_at": event.updated_at,
+                }
+                event_data.append(event_dict)
 
-        return {
-            "data": data,
-            "meta": {
-                "total": total,
-                "page": page,
-                "limit": limit,
-                "pages": (total + limit - 1) // limit,
-                "timestamp": datetime.utcnow(),
-            },
-        }
+            return {
+                "data": event_data,
+                "meta": {
+                    "total": total,
+                    "page": page,
+                    "limit": limit,
+                    "pages": (total + limit - 1) // limit,
+                    "timestamp": datetime.utcnow(),
+                },
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error retrieving events: {str(e)}"
+            )
 
     def create_event(self, event_data: EventCreate) -> dict:
         try:
@@ -153,6 +183,17 @@ class EventFacade:
             "events_by_date": {},
         }
         for event in events:
+            # Handle tags parsing safely
+            tags = []
+            if event.tags:
+                try:
+                    if isinstance(event.tags, str):
+                        tags = json.loads(event.tags)
+                    elif isinstance(event.tags, list):
+                        tags = event.tags
+                except (json.JSONDecodeError, TypeError):
+                    tags = []
+            
             event_dict = {
                 "id": event.id,
                 "title": event.title,
@@ -160,7 +201,7 @@ class EventFacade:
                 "start_time": event.start_time,
                 "end_time": event.end_time,
                 "location": event.location,
-                "tags": json.loads(event.tags) if event.tags else [],
+                "tags": tags,
                 "is_all_day": event.is_all_day,
                 "color": event.color,
             }
@@ -171,8 +212,20 @@ class EventFacade:
 
     def get_upcoming_events(self, days: int = 7) -> dict:
         events = self._repository.upcoming(self._user.id, days)
-        event_data = [
-            {
+        event_data = []
+        for event in events:
+            # Handle tags parsing safely
+            tags = []
+            if event.tags:
+                try:
+                    if isinstance(event.tags, str):
+                        tags = json.loads(event.tags)
+                    elif isinstance(event.tags, list):
+                        tags = event.tags
+                except (json.JSONDecodeError, TypeError):
+                    tags = []
+            
+            event_dict = {
                 "id": event.id,
                 "user_id": event.user_id,
                 "title": event.title,
@@ -180,7 +233,7 @@ class EventFacade:
                 "start_time": event.start_time,
                 "end_time": event.end_time,
                 "location": event.location,
-                "tags": json.loads(event.tags) if event.tags else [],
+                "tags": tags,
                 "is_all_day": event.is_all_day,
                 "reminder_minutes": event.reminder_minutes,
                 "recurrence_rule": event.recurrence_rule,
@@ -188,8 +241,7 @@ class EventFacade:
                 "created_at": event.created_at,
                 "updated_at": event.updated_at,
             }
-            for event in events
-        ]
+            event_data.append(event_dict)
         start_date = datetime.now()
         end_date = start_date + timedelta(days=days)
         return {

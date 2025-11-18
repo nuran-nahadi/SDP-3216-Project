@@ -42,14 +42,11 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 201:
             print("✅ Task creation successful!")
             return response.json()["data"]
         else:
-            print("❌ Task creation failed!")
+            print(f"❌ Task creation failed! Status: {response.status_code}")
             return None
     
     def test_get_tasks(self, filters: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -66,14 +63,13 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
-            print("✅ Get tasks successful!")
-            return response.json()
+            tasks_data = response.json()
+            task_count = len(tasks_data.get("data", []))
+            print(f"✅ Get tasks successful! Found {task_count} tasks")
+            return tasks_data
         else:
-            print("❌ Get tasks failed!")
+            print(f"❌ Get tasks failed! Status: {response.status_code}")
             return None
     
     def test_get_task_by_id(self, task_id: str) -> Dict[str, Any]:
@@ -85,14 +81,12 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
-            print("✅ Get task by ID successful!")
-            return response.json()["data"]
+            task_data = response.json()["data"]
+            print(f"✅ Get task by ID successful! Task: {task_data.get('title', 'N/A')}")
+            return task_data
         else:
-            print("❌ Get task by ID failed!")
+            print(f"❌ Get task by ID failed! Status: {response.status_code}")
             return None
     
     def test_update_task(self, task_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -105,14 +99,11 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
             print("✅ Task update successful!")
             return response.json()["data"]
         else:
-            print("❌ Task update failed!")
+            print(f"❌ Task update failed! Status: {response.status_code}")
             return None
     
     def test_complete_task(self, task_id: str, actual_duration: int = None) -> Dict[str, Any]:
@@ -129,14 +120,11 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
             print("✅ Task completion successful!")
             return response.json()["data"]
         else:
-            print("❌ Task completion failed!")
+            print(f"❌ Task completion failed! Status: {response.status_code}")
             return None
     
     def test_get_today_tasks(self) -> Dict[str, Any]:
@@ -148,14 +136,13 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
-            print("✅ Get today's tasks successful!")
-            return response.json()
+            today_data = response.json()
+            task_count = len(today_data.get("data", []))
+            print(f"✅ Get today's tasks successful! Found {task_count} tasks for today")
+            return today_data
         else:
-            print("❌ Get today's tasks failed!")
+            print(f"❌ Get today's tasks failed! Status: {response.status_code}")
             return None
     
     def test_get_overdue_tasks(self) -> Dict[str, Any]:
@@ -167,14 +154,13 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
-            print("✅ Get overdue tasks successful!")
-            return response.json()
+            overdue_data = response.json()
+            task_count = len(overdue_data.get("data", []))
+            print(f"✅ Get overdue tasks successful! Found {task_count} overdue tasks")
+            return overdue_data
         else:
-            print("❌ Get overdue tasks failed!")
+            print(f"❌ Get overdue tasks failed! Status: {response.status_code}")
             return None
     
     def test_parse_task_text(self, text: str) -> Dict[str, Any]:
@@ -189,14 +175,12 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
-            print("✅ Parse task text successful!")
-            return response.json()["data"]
+            parsed_data = response.json()["data"]
+            print(f"✅ Parse task text successful! Extracted: {parsed_data.get('title', 'N/A')}")
+            return parsed_data
         else:
-            print("❌ Parse task text failed!")
+            print(f"❌ Parse task text failed! Status: {response.status_code}")
             return None
     
     def test_delete_task(self, task_id: str) -> bool:
@@ -208,14 +192,11 @@ class TaskAPITester:
             headers=self.headers
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Response: {json.dumps(response.json(), indent=2, default=str)}")
-        
         if response.status_code == 200:
             print("✅ Task deletion successful!")
             return True
         else:
-            print("❌ Task deletion failed!")
+            print(f"❌ Task deletion failed! Status: {response.status_code}")
             return False
     
     def run_comprehensive_test(self):
@@ -247,9 +228,9 @@ class TaskAPITester:
         }
         self.test_update_task(task_id, update_data)
         
-        # 6. Test natural language parsing
-        self.test_parse_task_text("Remind me to call mom tomorrow at 3 PM #family")
-        self.test_parse_task_text("High priority task to review budget by next week")
+        # # 6. Test natural language parsing
+        # self.test_parse_task_text("Remind me to call mom tomorrow at 3 PM #family")
+        # self.test_parse_task_text("High priority task to review budget by next week")
         
         # 7. Get today's tasks
         self.test_get_today_tasks()

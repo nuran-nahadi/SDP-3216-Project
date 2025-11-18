@@ -8,6 +8,7 @@ from fastapi import HTTPException, Depends, status
 from app.models.models import User
 from sqlalchemy.orm import Session
 from fastapi.security import HTTPBearer
+import uuid
 from app.db.database import get_db
 from app.utils.responses import ResponseHandler
 
@@ -52,8 +53,9 @@ async def create_refresh_token(data):
 
 
 # Create Access & Refresh Token
-async def get_user_token(id: int, refresh_token=None):
-    payload = {"id": id}
+async def get_user_token(id, refresh_token=None):
+    # Convert UUID to string for JSON serialization
+    payload = {"id": str(id)}
 
     access_token_expiry = timedelta(minutes=settings.access_token_expire_minutes)
     refresh_token_expiry = timedelta(days=settings.refresh_token_expire_days)
@@ -95,7 +97,9 @@ def check_admin_role(
         db: Session = Depends(get_db)):
     user = get_token_payload(token.credentials)
     user_id = user.get('id')
-    role_user = db.query(User).filter(User.id == user_id).first()
+    # Convert string ID back to UUID for database query
+    user_uuid = uuid.UUID(user_id)
+    role_user = db.query(User).filter(User.id == user_uuid).first()
     if role_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin role required")
 
@@ -109,7 +113,9 @@ def get_current_authenticated_user(
     user_data = get_token_payload(token.credentials)
     user_id = user_data.get('id')
     
-    user = db.query(User).filter(User.id == user_id).first()
+    # Convert string ID back to UUID for database query
+    user_uuid = uuid.UUID(user_id)
+    user = db.query(User).filter(User.id == user_uuid).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

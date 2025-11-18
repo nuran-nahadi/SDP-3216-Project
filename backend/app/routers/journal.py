@@ -70,6 +70,71 @@ def create_journal_entry(
 
 
 @router.get(
+    "/stats",
+    status_code=status.HTTP_200_OK,
+    response_model=JournalStatsResponse,
+    summary="Get journaling statistics",
+    description="Get journaling statistics and metrics"
+)
+def get_journal_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+):
+    """Get journaling statistics"""
+    stats = JournalService.get_journal_stats(db, current_user)
+    return {
+        "success": True,
+        "data": stats,
+        "message": "Journal statistics retrieved successfully",
+        "meta": {"timestamp": datetime.now().isoformat()}
+    }
+
+
+@router.get(
+    "/mood-trends",
+    status_code=status.HTTP_200_OK,
+    response_model=MoodTrendsResponse,
+    summary="Get mood trends",
+    description="Get mood trends over time"
+)
+def get_mood_trends(
+    days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+):
+    """Get mood trends over time"""
+    trends = JournalService.get_mood_trends(db, current_user, days)
+    return {
+        "success": True,
+        "data": trends,
+        "message": "Mood trends retrieved successfully",
+        "meta": {"timestamp": datetime.now().isoformat()}
+    }
+
+
+@router.post(
+    "/parse",
+    status_code=status.HTTP_200_OK,
+    response_model=JournalParseResponse,
+    summary="Parse natural language",
+    description="Parse natural language input into journal entry data"
+)
+def parse_journal_text(
+    parse_request: JournalParseRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+):
+    """Parse natural language into journal data"""
+    parsed_data = JournalService.parse_natural_language(parse_request.text)
+    return {
+        "success": True,
+        "data": parsed_data,
+        "message": "Text parsed successfully",
+        "meta": {"timestamp": datetime.now().isoformat()}
+    }
+
+
+@router.get(
     "/{entry_id}",
     status_code=status.HTTP_200_OK,
     response_model=JournalEntryResponse,
@@ -159,66 +224,4 @@ def analyze_journal_entries(
     }
 
 
-@router.get(
-    "/stats",
-    status_code=status.HTTP_200_OK,
-    response_model=JournalStatsResponse,
-    summary="Get journaling statistics",
-    description="Get journaling statistics and metrics"
-)
-def get_journal_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
-):
-    """Get journaling statistics"""
-    stats = JournalService.get_journal_stats(db, current_user)
-    return {
-        "success": True,
-        "data": stats,
-        "message": "Journal statistics retrieved successfully",
-        "meta": {"timestamp": datetime.now().isoformat()}
-    }
 
-
-@router.post(
-    "/parse",
-    status_code=status.HTTP_200_OK,
-    response_model=JournalParseResponse,
-    summary="Parse natural language",
-    description="Parse natural language input into journal entry data"
-)
-def parse_journal_text(
-    parse_request: JournalParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
-):
-    """Parse natural language into journal data"""
-    parsed_data = JournalService.parse_natural_language(parse_request.text)
-    return {
-        "success": True,
-        "data": parsed_data,
-        "message": "Text parsed successfully",
-        "meta": {"timestamp": datetime.now().isoformat()}
-    }
-
-
-@router.get(
-    "/mood-trends",
-    status_code=status.HTTP_200_OK,
-    response_model=MoodTrendsResponse,
-    summary="Get mood trends",
-    description="Get mood trends over time"
-)
-def get_mood_trends(
-    days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
-):
-    """Get mood trends over time"""
-    trends = JournalService.get_mood_trends(db, current_user, days)
-    return {
-        "success": True,
-        "data": trends,
-        "message": "Mood trends retrieved successfully",
-        "meta": {"timestamp": datetime.now().isoformat()}
-    }
