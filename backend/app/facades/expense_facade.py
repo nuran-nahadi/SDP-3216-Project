@@ -91,6 +91,8 @@ class ExpenseFacade:
             },
         }
 
+    
+    
     def create_expense(self, expense_data: ExpenseCreate) -> dict:
         try:
             payload = {
@@ -108,6 +110,9 @@ class ExpenseFacade:
             }
 
             expense = self._repository.create(self._user.id, payload)
+            
+            
+            
             return {
                 "success": True,
                 "data": ExpenseOut.model_validate(expense),
@@ -120,6 +125,8 @@ class ExpenseFacade:
                 detail=f"Failed to create expense: {exc}",
             ) from exc
 
+    
+    
     def get_expense(self, expense_id: UUID) -> dict:
         expense = self._repository.get_by_id(self._user.id, expense_id)
         if not expense:

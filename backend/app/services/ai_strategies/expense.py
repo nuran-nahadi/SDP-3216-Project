@@ -27,6 +27,8 @@ class ExpenseTextStrategy(AIStrategy):
     def __init__(self) -> None:
         super().__init__("parse_text_expense")
 
+    
+    
     async def execute(self, service: "GeminiAIService", **kwargs: Any) -> Dict[str, Any]:
         text: str = kwargs.get("text", "").strip()
         if not text:
@@ -43,6 +45,10 @@ class ExpenseTextStrategy(AIStrategy):
             logger.error("Error parsing text expense: %s", exc)
             raise HTTPException(status_code=500, detail=f"AI processing error: {exc}")
 
+    
+    
+    
+    
     def _build_prompt(self) -> str:
         categories = [cat.value for cat in ExpenseCategory]
         payment_methods = [method.value for method in PaymentMethod]
@@ -98,6 +104,9 @@ Examples of NON expense-related inputs:
 Current date and time: {datetime.now().isoformat()}
 """
 
+    
+    
+    
     def _normalize_result(self, result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         if not result:
             raise HTTPException(status_code=400, detail="Failed to parse expense from text")
@@ -146,12 +155,18 @@ Current date and time: {datetime.now().isoformat()}
         return result
 
 
+
+
+
+
 class ExpenseReceiptStrategy(AIStrategy):
     """Handle receipt image parsing."""
 
     def __init__(self) -> None:
         super().__init__("parse_receipt_image")
 
+    
+    
     async def execute(self, service: "GeminiAIService", **kwargs: Any) -> Dict[str, Any]:
         image_file: UploadFile = kwargs.get("image_file")  # type: ignore[assignment]
         if image_file is None:
@@ -175,6 +190,9 @@ class ExpenseReceiptStrategy(AIStrategy):
             logger.error("Error parsing receipt image: %s", exc)
             raise HTTPException(status_code=500, detail=f"Image processing error: {exc}")
 
+    
+    
+    
     def _build_prompt(self, service: "GeminiAIService") -> str:
         base_prompt = self._get_text_strategy(service)._build_prompt()
         return base_prompt + """
@@ -190,6 +208,7 @@ Look for:
 Focus on the final total amount, not individual item prices.
 """
 
+    
     def _get_text_strategy(self, service: "GeminiAIService") -> ExpenseTextStrategy:
         strategy = service.get_strategy("parse_text_expense")
         if isinstance(strategy, ExpenseTextStrategy):
@@ -198,12 +217,16 @@ Focus on the final total amount, not individual item prices.
         return ExpenseTextStrategy()
 
 
+
+
 class ExpenseVoiceStrategy(AIStrategy):
     """Handle voice recording expense parsing."""
 
     def __init__(self) -> None:
         super().__init__("parse_voice_expense")
 
+    
+    
     async def execute(self, service: "GeminiAIService", **kwargs: Any) -> Dict[str, Any]:
         audio_file: UploadFile = kwargs.get("audio_file")  # type: ignore[assignment]
         if audio_file is None:

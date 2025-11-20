@@ -23,6 +23,8 @@ from app.services.ai_strategies.base import AIStrategy
 logger = logging.getLogger(__name__)
 
 
+# Strategy pattern Context Class
+
 class GeminiAIService:
     """AI service that delegates behavior to interchangeable strategies."""
 
@@ -36,6 +38,17 @@ class GeminiAIService:
         self._strategies: Dict[str, AIStrategy] = {}
         self._register_default_strategies()
 
+    
+    # self._strategies = {
+    #     "parse_text_expense": ExpenseTextStrategy(...),
+    #     "parse_receipt_image": ExpenseReceiptStrategy(...),
+    #     "parse_voice_expense": ExpenseVoiceStrategy(...),
+    #     "parse_text_task": TaskTextStrategy(...),
+    #     ...
+    #     "get_spending_insights": SpendingInsightsStrategy(...),
+    # }
+
+    
     def _register_default_strategies(self) -> None:
         """Register the built-in strategies for AI features."""
         for strategy in (
@@ -56,11 +69,15 @@ class GeminiAIService:
             raise ValueError(f"Strategy '{strategy.name}' already registered")
         self._strategies[strategy.name] = strategy
 
+    
+    
+    
+    
     def get_strategy(self, name: str) -> AIStrategy:
         """Retrieve a registered strategy by name."""
         try:
             return self._strategies[name]
-        except KeyError as exc:  # pragma: no cover - defensive guard
+        except KeyError as exc:  
             raise ValueError(f"No strategy registered for '{name}'") from exc
 
     async def _execute_strategy(self, name: str, **kwargs: Any) -> Dict[str, Any]:
@@ -69,6 +86,9 @@ class GeminiAIService:
             raise ValueError(f"No strategy registered for '{name}'")
         return await strategy.execute(self, **kwargs)
 
+    
+    
+    
     async def parse_text_expense(self, text: str) -> Dict[str, Any]:
         return await self._execute_strategy("parse_text_expense", text=text)
 
@@ -93,6 +113,8 @@ class GeminiAIService:
     async def get_spending_insights(self, expenses_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         return await self._execute_strategy("get_spending_insights", expenses_data=expenses_data)
 
+    
+    
     def parse_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
         """Extract the first JSON object from the model response."""
         try:
@@ -110,4 +132,6 @@ class GeminiAIService:
             return None
 
 
+
 ai_service = GeminiAIService()
+

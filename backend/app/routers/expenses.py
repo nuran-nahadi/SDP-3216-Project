@@ -29,6 +29,10 @@ def get_expense_facade(
     return ExpenseFacade(ExpenseRepository(db), current_user)
 
 
+
+
+
+
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
@@ -240,6 +244,8 @@ def export_expenses(
         start_date=start_date,
         end_date=end_date,
     )
+
+
 
 # AI-powered endpoints
 @router.post(

@@ -12,7 +12,6 @@ from app.models.models import Expense
 
 
 class ExpenseRepository:
-    """Encapsulates all direct database access for expenses."""
 
     def __init__(self, db: Session) -> None:
         self._db = db
