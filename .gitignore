@@ -197,3 +197,5 @@ docker-compose.override.yml
 *.backup
 *.bak
 *.orig
+.kiro/
+frontend/
