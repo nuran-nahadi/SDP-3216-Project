@@ -9,6 +9,7 @@ app = FastAPI(
     title="LIN: AI-Powered Personal Life Manager API",
     description="A unified web application that empowers users to effortlessly track and reflect on key aspects of their daily lives",
     version="1.0.0",
+    redirect_slashes=False,
     swagger_ui_parameters={
         "syntaxHighlight.theme": "monokai",
         "layout": "BaseLayout",

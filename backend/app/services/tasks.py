@@ -21,18 +21,35 @@ class TaskService:
         tags: Optional[List[str]] = None,
         search: Optional[str] = None,
         page: int = 1,
-        limit: int = 50
+        limit: int = 50,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
     ) -> dict:
         """Get tasks with filters and pagination"""
         query = db.query(Task).filter(Task.user_id == user.id)
         
         # Apply filters
         if status_filter:
-            query = query.filter(Task.status == status_filter.value)
+            # Handle both string and enum values
+            status_value = status_filter.value if hasattr(status_filter, 'value') else status_filter
+            print(f"DEBUG: Filtering by status: {status_value} (type: {type(status_value)})")
+            query = query.filter(Task.status == status_value)
         if priority:
             query = query.filter(Task.priority == priority.value)
         if due_date:
             query = query.filter(func.date(Task.due_date) == due_date.date())
+        if start_date and end_date:
+            # Filter tasks with due_date between start_date and end_date
+            query = query.filter(
+                and_(
+                    Task.due_date >= start_date,
+                    Task.due_date <= end_date
+                )
+            )
+        elif start_date:
+            query = query.filter(Task.due_date >= start_date)
+        elif end_date:
+            query = query.filter(Task.due_date <= end_date)
         if tags:
             # Filter tasks that have any of the specified tags
             tag_conditions = []

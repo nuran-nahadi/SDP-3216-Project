@@ -292,11 +292,11 @@ async def parse_voice_with_ai(
 ):
     """Parse expense from voice recording using AI"""
     # Validate file type
-    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a']
+    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/webm']
     if not file.content_type or file.content_type not in allowed_audio_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an audio file (MP3, WAV, M4A)"
+            detail="File must be an audio file (MP3, WAV, M4A, WebM)"
         )
 
     return await facade.parse_voice_with_ai(file)
