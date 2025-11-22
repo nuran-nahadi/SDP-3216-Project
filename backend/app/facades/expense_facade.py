@@ -459,24 +459,13 @@ class ExpenseFacade:
                     "message": "Low confidence in parsing. Please provide more details.",
                 }
 
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
-                "message": "Expense created successfully from text",
+                "message": "Expense parsed successfully from text",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {
@@ -501,44 +490,13 @@ class ExpenseFacade:
                     "message": "Low confidence in receipt parsing. Please verify the image.",
                 }
 
-            receipt_url = None
-            try:
-                await image_file.seek(0)
-                receipt_url = await upload_receipt_image(image_file)
-            except Exception:  # pragma: no cover - upload optional
-                receipt_url = None
-
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
-
-            if receipt_url and result["success"]:
-                expense_obj = self._repository.get_by_id(
-                    self._user.id,
-                    result["data"].id,
-                )
-                if expense_obj:
-                    updated = self._repository.update(
-                        expense_obj,
-                        {"receipt_url": receipt_url},
-                    )
-                    result["data"] = ExpenseOut.model_validate(updated)
-
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
-                "message": "Expense created successfully from receipt",
+                "message": "Receipt parsed successfully",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {
@@ -564,25 +522,14 @@ class ExpenseFacade:
                     "message": "Low confidence in voice parsing. Please speak more clearly.",
                 }
 
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
                 "transcribed_text": parsed_data.get("transcribed_text"),
-                "message": "Expense created successfully from voice",
+                "message": "Voice parsed successfully",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {

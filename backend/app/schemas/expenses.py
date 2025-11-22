@@ -243,8 +243,7 @@ class AIExpenseParseRequest(BaseModel):
 class AIExpenseParseResponse(BaseModel):
     """Response schema for AI-parsed expense"""
     success: bool
-    data: Optional[ExpenseOut] = None
-    parsed_data: Optional[dict] = None
+    data: Optional[dict] = None  # Changed from ExpenseOut to dict since we return parsed data, not a created expense
     confidence: Optional[float] = None
     transcribed_text: Optional[str] = None  # For voice inputs
     message: str

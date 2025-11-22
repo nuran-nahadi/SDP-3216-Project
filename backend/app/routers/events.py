@@ -224,10 +224,10 @@ def parse_natural_language(
 
 @router.post(
     "/ai/parse-text",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AIEventParseResponse,
     summary="Parse event from text using AI",
-    description="Parse natural language text into event data using Gemini AI"
+    description="Parse natural language text into event data using Gemini AI (does not create event)"
 )
 async def parse_text_with_ai(
     request: AIEventParseRequest,
@@ -238,10 +238,10 @@ async def parse_text_with_ai(
 
 @router.post(
     "/ai/parse-voice",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AIEventParseResponse,
     summary="Parse event from voice using AI",
-    description="Parse voice recording into event data using Gemini AI"
+    description="Parse voice recording into event data using Gemini AI (does not create event)"
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),

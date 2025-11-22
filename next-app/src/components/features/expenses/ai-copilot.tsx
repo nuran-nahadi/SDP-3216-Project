@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseText, parseReceipt, parseVoice } from '@/lib/api/expenses';
 import { toast } from 'sonner';
-import { Loader2, FileText, Image as ImageIcon, Mic, Send } from 'lucide-react';
+import { Loader2, FileText, Image as ImageIcon, Mic } from 'lucide-react';
 import { ExpenseForm } from './expense-form';
 import { Expense } from '@/lib/types/expense';
 
@@ -44,14 +43,7 @@ export function AICopilot() {
   // Voice mode state
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [transcription, setTranscription] = useState('');
-
-  // Chat mode state
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>(
-    []
-  );
-  const [chatInput, setChatInput] = useState('');
 
   const handleTextParse = async () => {
     if (!textInput.trim()) {
@@ -171,7 +163,6 @@ export function AICopilot() {
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
-      setAudioChunks([]);
     } catch (error) {
       console.error('Error starting recording:', error);
       toast.error('Failed to start recording. Please check microphone permissions.');
@@ -183,21 +174,6 @@ export function AICopilot() {
       mediaRecorder.stop();
       setIsRecording(false);
     }
-  };
-
-  const handleSendMessage = async () => {
-    if (!chatInput.trim()) return;
-
-    const userMessage = { role: 'user' as const, content: chatInput };
-    setMessages((prev) => [...prev, userMessage]);
-    setChatInput('');
-
-    // For now, just echo back - in real implementation, this would call an AI chat API
-    const assistantMessage = {
-      role: 'assistant' as const,
-      content: 'Chat functionality is not yet implemented. Please use the parsing modes above.',
-    };
-    setMessages((prev) => [...prev, assistantMessage]);
   };
 
   const handleReviewAndEdit = () => {
@@ -270,9 +246,7 @@ export function AICopilot() {
 
         <TabsContent value="text" className="space-y-4">
           <div>
-            <Label htmlFor="text-input">Describe your expense</Label>
             <Textarea
-              id="text-input"
               placeholder="e.g., Spent $45.50 on groceries at Whole Foods yesterday"
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
@@ -293,9 +267,7 @@ export function AICopilot() {
 
         <TabsContent value="receipt" className="space-y-4">
           <div>
-            <Label htmlFor="receipt-upload">Upload receipt image</Label>
             <Input
-              id="receipt-upload"
               type="file"
               accept="image/*"
               onChange={handleReceiptUpload}
@@ -387,45 +359,6 @@ export function AICopilot() {
           </Button>
         </div>
       )}
-
-      {/* Chat Interface */}
-      <div className="mt-6 border-t pt-6">
-        <h4 className="font-semibold mb-4">Ask Questions</h4>
-        <div className="space-y-4">
-          {messages.length > 0 && (
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground ml-8'
-                      : 'bg-muted mr-8'
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Ask a follow-up question..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-            />
-            <Button onClick={handleSendMessage} size="icon">
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
     </Card>
   );
 }

@@ -470,22 +470,13 @@ class TaskService:
                     "confidence": parsed_data.get('confidence', 0),
                     "message": "Low confidence in parsing. Please provide more details about your task (title, due date, etc.)."
                 }
-            # Create task from parsed data
-            task_create = TaskCreate(
-                title=parsed_data['title'],
-                description=parsed_data.get('description'),
-                due_date=datetime.fromisoformat(parsed_data['due_date']) if parsed_data.get('due_date') else None,
-                priority=TaskPriority(parsed_data.get('priority', 'medium')),
-                status=TaskStatus(parsed_data.get('status', 'pending')),
-                tags=parsed_data.get('tags', [])
-            )
-            result = TaskService.create_task(db, user, task_create)
+            # Return only parsed data without creating the task
+            # Task will be created when user explicitly submits the form
             return {
                 "success": True,
-                "data": result,
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get('confidence', 0.8),
-                "message": "Task created successfully from text"
+                "message": "Task parsed successfully"
             }
         except Exception as e:
             return {
@@ -511,22 +502,14 @@ class TaskService:
                     "transcribed_text": parsed_data.get('transcribed_text'),
                     "message": "Low confidence in voice parsing. Please speak more clearly."
                 }
-            task_create = TaskCreate(
-                title=parsed_data['title'],
-                description=parsed_data.get('description'),
-                due_date=datetime.fromisoformat(parsed_data['due_date']) if parsed_data.get('due_date') else None,
-                priority=TaskPriority(parsed_data.get('priority', 'medium')),
-                status=TaskStatus(parsed_data.get('status', 'pending')),
-                tags=parsed_data.get('tags', [])
-            )
-            result = TaskService.create_task(db, user, task_create)
+            # Return parsed data without creating the task
+            # The frontend will create the task after user reviews and confirms
             return {
                 "success": True,
-                "data": result,
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get('confidence', 0.8),
                 "transcribed_text": parsed_data.get('transcribed_text'),
-                "message": "Task created successfully from voice"
+                "message": "Task parsed successfully from voice"
             }
         except Exception as e:
             return {

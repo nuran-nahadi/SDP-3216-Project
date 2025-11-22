@@ -222,10 +222,10 @@ def parse_task_text(
 # AI-powered endpoints
 @router.post(
     "/ai/parse-text",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AITaskParseResponse,
     summary="Parse task from text using AI",
-    description="Parse natural language text into task data using Gemini AI"
+    description="Parse natural language text into task data using Gemini AI (does not create task)"
 )
 async def parse_text_with_ai(
     request: AITaskParseRequest,
@@ -237,10 +237,10 @@ async def parse_text_with_ai(
 
 @router.post(
     "/ai/parse-voice",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AITaskParseResponse,
     summary="Parse task from voice using AI",
-    description="Parse voice recording into task data using Gemini AI"
+    description="Parse voice recording into task data using Gemini AI (does not create task)"
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),

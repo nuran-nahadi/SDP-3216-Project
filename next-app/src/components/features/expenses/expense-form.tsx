@@ -46,27 +46,28 @@ type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
 interface ExpenseFormProps {
   expense?: Expense;
+  initialData?: Partial<ExpenseFormValues>;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function ExpenseForm({ expense, onSuccess, onCancel }: ExpenseFormProps) {
+export function ExpenseForm({ expense, initialData, onSuccess, onCancel }: ExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [tagInput, setTagInput] = useState('');
-  const [tags, setTags] = useState<string[]>(expense?.tags || []);
+  const [tags, setTags] = useState<string[]>(initialData?.tags || expense?.tags || []);
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      amount: expense?.amount || 0,
-      currency: expense?.currency || 'USD',
-      category: expense?.category || ExpenseCategory.OTHER,
-      subcategory: expense?.subcategory || '',
-      merchant: expense?.merchant || '',
-      description: expense?.description || '',
-      date: expense?.date || new Date().toISOString().split('T')[0],
-      payment_method: expense?.payment_method || undefined,
-      tags: expense?.tags || [],
+      amount: initialData?.amount || expense?.amount || 0,
+      currency: initialData?.currency || expense?.currency || 'USD',
+      category: initialData?.category || expense?.category || ExpenseCategory.OTHER,
+      subcategory: initialData?.subcategory || expense?.subcategory || '',
+      merchant: initialData?.merchant || expense?.merchant || '',
+      description: initialData?.description || expense?.description || '',
+      date: initialData?.date || expense?.date || new Date().toISOString().split('T')[0],
+      payment_method: initialData?.payment_method || expense?.payment_method || undefined,
+      tags: initialData?.tags || expense?.tags || [],
     },
   });
 
