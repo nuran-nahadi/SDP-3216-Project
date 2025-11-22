@@ -126,22 +126,30 @@ export function AppSidebar({ className }: AppSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              style={isActive ? {
+                backgroundColor: 'hsl(var(--primary))',
+                color: 'hsl(var(--primary-foreground))'
+              } : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
-                'hover:bg-primary/10 hover:text-primary hover:shadow-sm hover:translate-x-1',
+                'flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold transition-all duration-200 relative overflow-hidden group',
                 isActive
-                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02] border-l-4 border-primary-foreground/30'
-                  : 'text-muted-foreground border-l-4 border-transparent'
+                  ? 'shadow-2xl shadow-primary/50 scale-105 border-2 border-primary-foreground/30'
+                  : 'text-muted-foreground border-2 border-transparent hover:border-primary/30 hover:bg-gradient-to-r hover:from-primary/20 hover:to-primary/10 hover:text-primary hover:shadow-lg hover:translate-x-1'
               )}
             >
-              <Icon className={cn(
-                "h-5 w-5 flex-shrink-0 transition-transform",
-                isActive && "scale-110"
-              )} />
-              <span>{item.label}</span>
+              {/* Decorative shine overlay for active state */}
               {isActive && (
-                <div className="ml-auto">
-                  <Sparkles className="h-3 w-3 text-primary-foreground animate-pulse" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 via-white/10 to-transparent pointer-events-none" />
+              )}
+              
+              <Icon className={cn(
+                "h-5 w-5 flex-shrink-0 transition-transform relative z-10",
+                isActive && "scale-125 drop-shadow-[0_2px_8px_rgba(255,255,255,0.5)]"
+              )} />
+              <span className="relative z-10">{item.label}</span>
+              {isActive && (
+                <div className="ml-auto relative z-10">
+                  <Sparkles className="h-4 w-4 animate-pulse drop-shadow-[0_2px_8px_rgba(255,255,255,0.5)]" />
                 </div>
               )}
             </Link>

@@ -68,13 +68,13 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
 
   return (
     <>
-      <div className="group border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+      <div className="group border-2 rounded-xl p-4 bg-gradient-to-br from-card to-primary/5 hover:shadow-lg hover:border-primary/30 transition-all duration-200 smooth-transition">
         <div className="flex items-start gap-3">
           {/* Checkbox */}
           <Checkbox
             checked={task.is_completed}
             onCheckedChange={handleCheckboxChange}
-            className="mt-1"
+            className="mt-1 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
 
           {/* Main Content */}
@@ -83,7 +83,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
               <div className="flex-1 min-w-0">
                 <h3
                   className={cn(
-                    'font-medium text-sm',
+                    'font-semibold text-sm',
                     task.is_completed && 'line-through text-muted-foreground'
                   )}
                 >
@@ -92,7 +92,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
                 
                 {/* Metadata */}
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <Badge variant="outline" className={priorityColors[task.priority]}>
+                  <Badge variant="outline" className={cn(priorityColors[task.priority], 'font-semibold border-2')}>
                     {task.priority}
                   </Badge>
                   
@@ -115,7 +115,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
                 {task.tags && task.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {task.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                      <Badge key={tag} variant="secondary" className="text-xs bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/20 font-medium">
                         {tag}
                       </Badge>
                     ))}

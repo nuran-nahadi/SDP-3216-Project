@@ -70,14 +70,19 @@ export function TaskList({
 
   return (
     <div className="space-y-3">
-      {tasks.map((task) => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          onComplete={onComplete}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+      {tasks.map((task, index) => (
+        <div 
+          key={task.id} 
+          className="fade-in"
+          style={{ animationDelay: `${index * 0.05}s` }}
+        >
+          <TaskItem
+            task={task}
+            onComplete={onComplete}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </div>
       ))}
     </div>
   );

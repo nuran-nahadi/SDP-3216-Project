@@ -28,9 +28,12 @@ export function ExpenseList({ onEdit, onDelete }: ExpenseListProps) {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      // Only show loading on initial load or page change
+      if (isInitial) {
+        setLoading(true);
+      }
       setError(null);
       const response = await getExpenses({ page, limit });
       setExpenses(response.data);
@@ -41,17 +44,19 @@ export function ExpenseList({ onEdit, onDelete }: ExpenseListProps) {
       setError('Failed to load expenses');
       console.error('Error fetching expenses:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   }, [page]);
 
   useEffect(() => {
-    fetchExpenses();
+    fetchExpenses(true);
   }, [fetchExpenses]);
 
-  // Subscribe to expense events for auto-refresh
+  // Subscribe to expense events for auto-refresh (without loading state)
   useEventBus([EXPENSE_CREATED, EXPENSE_UPDATED, EXPENSE_DELETED], () => {
-    fetchExpenses();
+    fetchExpenses(false);
   });
 
   if (loading) {
@@ -84,13 +89,18 @@ export function ExpenseList({ onEdit, onDelete }: ExpenseListProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        {expenses.map((expense) => (
-          <ExpenseItem
+        {expenses.map((expense, index) => (
+          <div 
             key={expense.id}
-            expense={expense}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+            className="fade-in"
+            style={{ animationDelay: `${index * 0.05}s` }}
+          >
+            <ExpenseItem
+              expense={expense}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
         ))}
       </div>
 
