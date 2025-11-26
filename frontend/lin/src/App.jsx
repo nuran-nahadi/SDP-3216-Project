@@ -3,6 +3,7 @@ import Sidebar from './components/dashboard/Sidebar';
 import Dashboard from './components/dashboard/Dashboard';
 import ProfilePage from './components/profile/ProfilePage';
 import CalendarPage from './components/CalendarPage/CalendarPage';
+import Journal from './components/Journal/Journal';
 
 import ToDo from './components/ToDoList/ToDo';
 // import ToDo from './components/ToDoList/ToDo';
@@ -52,6 +53,8 @@ function App() {
                 return <CalendarPage />;
             case 'Expense Tracker':
                 return <ExpenseTracker/>
+            case 'Journal':
+                return <Journal />;
             case 'Calendar':
                 return <CalendarPage />;
 

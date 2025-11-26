@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Query, UploadFile, File, status, HTTPExc
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.core.dependencies import get_current_user
-from app.services.expenses import ExpenseService
+from app.facades.expense_facade import ExpenseFacade
+from app.repositories.expense_repository import ExpenseRepository
 from app.schemas.expenses import (
     ExpenseCreate, ExpenseUpdate, ExpenseParseRequest, ExpenseBulkImport,
     ExpenseResponse, ExpensesResponse, ExpenseSummaryResponse, 
@@ -18,6 +19,18 @@ from uuid import UUID
 
 
 router = APIRouter(tags=["Expenses"], prefix="/expenses")
+
+
+def get_expense_facade(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+) -> ExpenseFacade:
+    """Instantiate an expense facade per request."""
+    return ExpenseFacade(ExpenseRepository(db), current_user)
+
+
+
+
 
 
 @router.get(
@@ -36,13 +49,18 @@ def get_expenses(
     search: Optional[str] = Query(None, description="Search in description, merchant, subcategory"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """List expenses with filters"""
-    return ExpenseService.get_expenses(
-        db, current_user, start_date, end_date, category, 
-        min_amount, max_amount, search, page, limit
+    return facade.get_expenses(
+        start_date=start_date,
+        end_date=end_date,
+        category=category,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        search=search,
+        page=page,
+        limit=limit,
     )
 
 
@@ -55,11 +73,10 @@ def get_expenses(
 )
 def create_expense(
     expense_data: ExpenseCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Create new expense"""
-    return ExpenseService.create_expense(db, current_user, expense_data)
+    return facade.create_expense(expense_data)
 
 
 @router.get(
@@ -71,11 +88,10 @@ def create_expense(
 )
 def get_expense(
     expense_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get specific expense"""
-    return ExpenseService.get_expense(db, current_user, expense_id)
+    return facade.get_expense(expense_id)
 
 
 @router.put(
@@ -88,11 +104,10 @@ def get_expense(
 def update_expense(
     expense_id: UUID,
     expense_data: ExpenseUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Update expense"""
-    return ExpenseService.update_expense(db, current_user, expense_id, expense_data)
+    return facade.update_expense(expense_id, expense_data)
 
 
 @router.delete(
@@ -104,11 +119,10 @@ def update_expense(
 )
 def delete_expense(
     expense_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Delete expense"""
-    return ExpenseService.delete_expense(db, current_user, expense_id)
+    return facade.delete_expense(expense_id)
 
 
 
@@ -124,11 +138,10 @@ def delete_expense(
 def get_expense_summary(
     start_date: Optional[datetime] = Query(None, description="Summary start date"),
     end_date: Optional[datetime] = Query(None, description="Summary end date"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get spending summary"""
-    return ExpenseService.get_expense_summary(db, current_user, start_date, end_date)
+    return facade.get_expense_summary(start_date=start_date, end_date=end_date)
 
 
 @router.get(
@@ -139,11 +152,10 @@ def get_expense_summary(
     description="Get expense categories with totals"
 )
 def get_categories(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get expense categories with totals"""
-    return ExpenseService.get_categories_summary(db, current_user)
+    return facade.get_categories_summary()
 
 
 @router.get(
@@ -156,8 +168,7 @@ def get_categories(
 def get_monthly_expenses(
     year: int,
     month: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get monthly expenses"""
     if month < 1 or month > 12:
@@ -165,8 +176,8 @@ def get_monthly_expenses(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Month must be between 1 and 12"
         )
-    
-    return ExpenseService.get_monthly_expenses(db, current_user, year, month)
+
+    return facade.get_monthly_expenses(year, month)
 
 
 @router.post(
@@ -179,11 +190,10 @@ def get_monthly_expenses(
 async def upload_receipt(
     expense_id: UUID,
     file: UploadFile = File(..., description="Receipt image file"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Upload receipt image"""
-    return await ExpenseService.upload_receipt(db, current_user, expense_id, file)
+    return await facade.upload_receipt(expense_id, file)
 
 
 @router.get(
@@ -194,11 +204,10 @@ async def upload_receipt(
     description="Get all recurring expenses"
 )
 def get_recurring_expenses(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get recurring expenses"""
-    return ExpenseService.get_recurring_expenses(db, current_user)
+    return facade.get_recurring_expenses()
 
 
 # @router.post(
@@ -227,11 +236,16 @@ def export_expenses(
     format: str = Query("csv", enum=["csv", "json"], description="Export format"),
     start_date: Optional[datetime] = Query(None, description="Export start date"),
     end_date: Optional[datetime] = Query(None, description="Export end date"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Export expenses"""
-    return ExpenseService.export_expenses(db, current_user, format, start_date, end_date)
+    return facade.export_expenses(
+        format=format,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
 
 # AI-powered endpoints
 @router.post(
@@ -243,11 +257,10 @@ def export_expenses(
 )
 async def parse_text_with_ai(
     request: AIExpenseParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Parse expense from natural language text using AI"""
-    return await ExpenseService.parse_text_with_ai(db, current_user, request.text)
+    return await facade.parse_text_with_ai(request.text)
 
 
 @router.post(
@@ -259,8 +272,7 @@ async def parse_text_with_ai(
 )
 async def parse_receipt_with_ai(
     file: UploadFile = File(..., description="Receipt image file (JPG, PNG, etc.)"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Parse expense from receipt image using AI"""
     # Validate file type
@@ -269,8 +281,8 @@ async def parse_receipt_with_ai(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an image"
         )
-    
-    return await ExpenseService.parse_receipt_with_ai(db, current_user, file)
+
+    return await facade.parse_receipt_with_ai(file)
 
 
 @router.post(
@@ -282,8 +294,7 @@ async def parse_receipt_with_ai(
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Parse expense from voice recording using AI"""
     # Validate file type
@@ -293,8 +304,8 @@ async def parse_voice_with_ai(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an audio file (MP3, WAV, M4A)"
         )
-    
-    return await ExpenseService.parse_voice_with_ai(db, current_user, file)
+
+    return await facade.parse_voice_with_ai(file)
 
 
 @router.get(
@@ -306,11 +317,10 @@ async def parse_voice_with_ai(
 )
 async def get_ai_insights(
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get AI-powered spending insights"""
-    return await ExpenseService.get_ai_insights(db, current_user, days)
+    return await facade.get_ai_insights(days)
 
 
 # ================================ DASHBOARD ENDPOINTS ================================
@@ -323,11 +333,10 @@ async def get_ai_insights(
     description="Get current month total spend vs previous month with percentage change"
 )
 def get_total_spend_dashboard(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get total spend dashboard data"""
-    return ExpenseService.get_total_spend_dashboard(db, current_user)
+    return facade.get_total_spend_dashboard()
 
 
 @router.get(
@@ -340,11 +349,10 @@ def get_total_spend_dashboard(
 def get_category_breakdown_dashboard(
     period: str = Query("current_month", enum=["current_month", "last_30_days", "current_year"], 
                        description="Time period for breakdown"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get category breakdown dashboard data"""
-    return ExpenseService.get_category_breakdown_dashboard(db, current_user, period)
+    return facade.get_category_breakdown_dashboard(period)
 
 
 @router.get(
@@ -356,11 +364,10 @@ def get_category_breakdown_dashboard(
 )
 def get_category_trend_dashboard(
     months: int = Query(6, ge=3, le=24, description="Number of months to analyze"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get category trend dashboard data"""
-    return ExpenseService.get_category_trend_dashboard(db, current_user, months)
+    return facade.get_category_trend_dashboard(months)
 
 
 @router.get(
@@ -374,11 +381,10 @@ def get_spend_trend_dashboard(
     period: str = Query("daily", enum=["daily", "weekly", "monthly"], 
                        description="Time period granularity"),
     days: int = Query(30, ge=7, le=365, description="Number of days to analyze"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get spend trend dashboard data"""
-    return ExpenseService.get_spend_trend_dashboard(db, current_user, period, days)
+    return facade.get_spend_trend_dashboard(period=period, days=days)
 
 
 @router.get(
@@ -392,8 +398,7 @@ def get_top_transactions_dashboard(
     period: str = Query("monthly", enum=["weekly", "monthly", "yearly"], 
                        description="Time period for top transactions"),
     limit: int = Query(5, ge=3, le=10, description="Number of top transactions to return"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: ExpenseFacade = Depends(get_expense_facade)
 ):
     """Get top transactions dashboard data"""
-    return ExpenseService.get_top_transactions_dashboard(db, current_user, period, limit)
+    return facade.get_top_transactions_dashboard(period=period, limit=limit)

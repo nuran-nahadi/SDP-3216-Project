@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Query, Path, status, HTTPException, File
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.core.dependencies import get_current_user
-from app.services.events import EventService
+from app.facades.event_facade import EventFacade
+from app.repositories.event_repository import EventRepository
 from app.schemas.events import (
     EventCreate, EventUpdate, EventParseRequest,
     EventResponse, EventsResponse, CalendarResponse, 
@@ -15,6 +16,14 @@ from uuid import UUID
 
 
 router = APIRouter(tags=["Events"], prefix="/events")
+
+
+def get_event_facade(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+) -> EventFacade:
+    """Instantiate the event facade for a request."""
+    return EventFacade(EventRepository(db), current_user)
 
 
 @router.get(
@@ -31,12 +40,16 @@ def get_events(
     search: Optional[str] = Query(None, description="Search in title, description, location"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """List events with filters"""
-    result = EventService.get_events(
-        db, current_user, start_date, end_date, tags, search, page, limit
+    result = facade.get_events(
+        start_date=start_date,
+        end_date=end_date,
+        tags=tags,
+        search=search,
+        page=page,
+        limit=limit,
     )
     return {
         "success": True,
@@ -55,17 +68,71 @@ def get_events(
 )
 def create_event(
     event: EventCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Create a new event"""
-    result = EventService.create_event(db, current_user, event)
+    result = facade.create_event(event)
     return {
         "success": True,
         "data": result["data"],
         "message": "Event created successfully",
         "meta": {"timestamp": datetime.utcnow()}
     }
+
+
+@router.get(
+    "/upcoming",
+    status_code=status.HTTP_200_OK,
+    response_model=EventsResponse,
+    summary="Get upcoming events",
+    description="Get upcoming events for the next 7 days"
+)
+def get_upcoming_events(
+    days: int = Query(7, ge=1, le=30, description="Number of days to look ahead"),
+    facade: EventFacade = Depends(get_event_facade)
+):
+    """Get upcoming events for the next N days"""
+    try:
+        result = facade.get_upcoming_events(days)
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Upcoming events retrieved successfully",
+            "meta": result["meta"]
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve upcoming events: {str(e)}"
+        )
+
+
+@router.get(
+    "/calendar/{year}/{month}",
+    status_code=status.HTTP_200_OK,
+    response_model=CalendarResponse,
+    summary="Get calendar view",
+    description="Get calendar view for a specific month"
+)
+def get_calendar_view(
+    year: int = Path(..., ge=1900, le=3000, description="Year"),
+    month: int = Path(..., ge=1, le=12, description="Month"),
+    facade: EventFacade = Depends(get_event_facade)
+):
+    """Get calendar view for a specific month"""
+    try:
+        result = facade.get_calendar_view(year, month)
+        return {
+            "success": True,
+            "data": result["data"],
+            "message": "Calendar view retrieved successfully",
+            "meta": {"timestamp": datetime.utcnow()}
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve calendar view: {str(e)}"
+        )
 
 
 @router.get(
@@ -77,11 +144,10 @@ def create_event(
 )
 def get_event(
     event_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Get a specific event by ID"""
-    result = EventService.get_event_by_id(db, current_user, event_id)
+    result = facade.get_event_by_id(event_id)
     return {
         "success": True,
         "data": result["data"],
@@ -100,11 +166,10 @@ def get_event(
 def update_event(
     event_id: UUID,
     event: EventUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Update an existing event"""
-    result = EventService.update_event(db, current_user, event_id, event)
+    result = facade.update_event(event_id, event)
     return {
         "success": True,
         "data": result["data"],
@@ -122,11 +187,10 @@ def update_event(
 )
 def delete_event(
     event_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Delete an existing event"""
-    EventService.delete_event(db, current_user, event_id)
+    facade.delete_event(event_id)
     return {
         "success": True,
         "message": "Event deleted successfully",
@@ -134,49 +198,7 @@ def delete_event(
     }
 
 
-@router.get(
-    "/calendar/{year}/{month}",
-    status_code=status.HTTP_200_OK,
-    response_model=CalendarResponse,
-    summary="Get calendar view",
-    description="Get calendar view for a specific month"
-)
-def get_calendar_view(
-    year: int = Path(..., ge=1900, le=3000, description="Year"),
-    month: int = Path(..., ge=1, le=12, description="Month"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
-):
-    """Get calendar view for a specific month"""
-    result = EventService.get_calendar_view(db, current_user, year, month)
-    return {
-        "success": True,
-        "data": result["data"],
-        "message": "Calendar view retrieved successfully",
-        "meta": {"timestamp": datetime.utcnow()}
-    }
 
-
-@router.get(
-    "/upcoming",
-    status_code=status.HTTP_200_OK,
-    response_model=EventsResponse,
-    summary="Get upcoming events",
-    description="Get upcoming events for the next 7 days"
-)
-def get_upcoming_events(
-    days: int = Query(7, ge=1, le=30, description="Number of days to look ahead"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
-):
-    """Get upcoming events for the next N days"""
-    result = EventService.get_upcoming_events(db, current_user, days)
-    return {
-        "success": True,
-        "data": result["data"],
-        "message": "Upcoming events retrieved successfully",
-        "meta": result["meta"]
-    }
 
 
 @router.post(
@@ -188,11 +210,10 @@ def get_upcoming_events(
 )
 def parse_natural_language(
     request: EventParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Parse natural language text into event data"""
-    result = EventService.parse_natural_language(request.text)
+    result = facade.parse_natural_language(request.text)
     return {
         "success": True,
         "data": result["data"],
@@ -210,11 +231,10 @@ def parse_natural_language(
 )
 async def parse_text_with_ai(
     request: AIEventParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Parse event from natural language text using AI"""
-    return await EventService.parse_text_with_ai(db, current_user, request.text)
+    return await facade.parse_text_with_ai(request.text)
 
 @router.post(
     "/ai/parse-voice",
@@ -225,8 +245,7 @@ async def parse_text_with_ai(
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: EventFacade = Depends(get_event_facade)
 ):
     """Parse event from voice using AI"""
     allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a']
@@ -235,4 +254,4 @@ async def parse_voice_with_ai(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an audio file (MP3, WAV, M4A)"
         )
-    return await EventService.parse_voice_with_ai(db, current_user, file)
+    return await facade.parse_voice_with_ai(file)
