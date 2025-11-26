@@ -1,4 +1,4 @@
-from app.routers import users, auth, accounts, user_profile, expenses, events, tasks, journal
+from app.routers import users, auth, accounts, user_profile, expenses, events, tasks, journal, daily_update
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,6 +40,7 @@ app.include_router(events.router)        # Event management endpoints
 app.include_router(expenses.router)      # Expense management endpoints
 app.include_router(tasks.router)         # Task management endpoints
 app.include_router(journal.router)       # Journal management endpoints
+app.include_router(daily_update.router)  # Daily update AI agent endpoints
 app.include_router(users.router)         # Legacy admin user management
 app.include_router(accounts.router)
 

@@ -8,9 +8,11 @@ import {
   CheckSquare, 
   Wallet, 
   Calendar, 
+  BookOpen,
   User, 
   X,
-  LogOut
+  LogOut,
+  MessageSquarePlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useAuth } from '@/lib/context/auth-context';
@@ -32,6 +34,11 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    label: 'Daily Update',
+    href: '/daily-update',
+    icon: MessageSquarePlus,
+  },
+  {
     label: 'Tasks',
     href: '/tasks',
     icon: CheckSquare,
@@ -45,6 +52,11 @@ const navItems: NavItem[] = [
     label: 'Calendar',
     href: '/calendar',
     icon: Calendar,
+  },
+  {
+    label: 'Journal',
+    href: '/journal',
+    icon: BookOpen,
   },
   {
     label: 'Profile',

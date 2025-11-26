@@ -12,6 +12,7 @@ import {
   User,
   LogOut,
   Sparkles,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useAuth } from '@/lib/context/auth-context';
@@ -31,6 +32,11 @@ const navItems: NavItem[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'Daily Update',
+    href: '/daily-update',
+    icon: MessageSquarePlus,
   },
   {
     label: 'Tasks',

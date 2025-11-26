@@ -7,8 +7,10 @@ import { TaskCompletionHeatmap } from '@/components/features/dashboard/task-comp
 import { ExpenseCharts } from '@/components/features/dashboard/expense-charts';
 import { AIInsights } from '@/components/features/dashboard/ai-insights';
 import { DashboardSkeleton } from '@/components/features/dashboard/dashboard-skeleton';
+import { PendingSummaryCard } from '@/components/features/daily-update';
 import { Skeleton } from '@/components/shared/skeleton';
 import { useDashboardMetrics } from '@/lib/hooks/use-dashboard-metrics';
+import { usePendingSummary } from '@/lib/hooks/use-daily-update';
 import {
   CheckCircle2,
   Calendar,
@@ -18,6 +20,7 @@ import {
 
 export default function DashboardPage() {
   const { metrics, loading, error } = useDashboardMetrics();
+  const { summary: pendingSummary, isLoading: pendingLoading, error: pendingError } = usePendingSummary();
 
   if (loading) {
     return (
@@ -113,12 +116,25 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Secondary Content - 2 Column Layout */}
-            <div className="grid gap-6 lg:grid-cols-2 mb-8">
+            {/* Secondary Content - 3 Column Layout */}
+            <div className="grid gap-6 lg:grid-cols-3 mb-8">
               {/* AI Insights - Prominent position */}
-              <AIInsights />
+              <div className="lg:col-span-2">
+                <AIInsights />
+              </div>
 
-              {/* Task Completion Heatmap */}
+              {/* Pending Updates Summary */}
+              <div className="lg:col-span-1">
+                <PendingSummaryCard 
+                  summary={pendingSummary}
+                  isLoading={pendingLoading}
+                  error={pendingError}
+                />
+              </div>
+            </div>
+
+            {/* Task Completion Heatmap */}
+            <div className="mb-8">
               <TaskCompletionHeatmap />
             </div>
 
