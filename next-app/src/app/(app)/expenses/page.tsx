@@ -15,7 +15,7 @@ import {
 import { AIChatPanel } from '@/components/shared/ai-chat-panel';
 import { AIFloatingButton } from '@/components/shared/ai-floating-button';
 import { useExpenseActions } from '@/lib/hooks/use-expense-actions';
-import { parseText } from '@/lib/api/expenses';
+import { parseText, parseReceipt, parseVoice } from '@/lib/api/expenses';
 import { Expense } from '@/lib/types/expense';
 
 export default function ExpensesPage() {
@@ -91,6 +91,92 @@ export default function ExpensesPage() {
     }
   };
 
+  const handleAIVoice = async (audioFile: File) => {
+    try {
+      const response = await parseVoice(audioFile);
+      
+      // Check if the response indicates failure
+      if (!response.success) {
+        const transcribedText = (response as any).transcribed_text;
+        let errorContent = response.message || 'I had trouble understanding that.';
+        if (transcribedText) {
+          errorContent = `📝 I heard: "${transcribedText}"\n\n${errorContent}\n\nPlease try describing the expense with more details like amount and category.`;
+        }
+        return {
+          content: errorContent,
+          transcribedText,
+        };
+      }
+
+      const parsed = response.data;
+
+      let content = 'I\'ve analyzed your voice input! Here\'s what I found:\n\n';
+      
+      if (parsed.amount) content += `💰 Amount: ${parsed.currency || 'USD'} ${parsed.amount}\n`;
+      if (parsed.category) content += `📁 Category: ${parsed.category}\n`;
+      if (parsed.merchant) content += `🏪 Merchant: ${parsed.merchant}\n`;
+      if (parsed.date) content += `📅 Date: ${parsed.date}\n`;
+      if (parsed.payment_method) content += `💳 Payment: ${parsed.payment_method}\n`;
+
+      content += '\nWould you like to create this expense?';
+
+      return {
+        content,
+        transcribedText: parsed.transcribed_text,
+        data: {
+          amount: parsed.amount || 0,
+          currency: parsed.currency || 'USD',
+          category: parsed.category,
+          subcategory: parsed.subcategory,
+          merchant: parsed.merchant,
+          description: parsed.description,
+          date: parsed.date || new Date().toISOString().split('T')[0],
+          payment_method: parsed.payment_method,
+        },
+      };
+    } catch (error) {
+      console.error('Voice parsing error:', error);
+      return {
+        content: 'I had trouble understanding your voice message. Please try again or speak more clearly.',
+      };
+    }
+  };
+
+  const handleAIImage = async (imageFile: File) => {
+    try {
+      const response = await parseReceipt(imageFile);
+      const parsed = response.data;
+
+      let content = 'I\'ve analyzed your receipt! Here\'s what I found:\n\n';
+      
+      if (parsed.amount) content += `💰 Amount: ${parsed.currency || 'USD'} ${parsed.amount}\n`;
+      if (parsed.category) content += `📁 Category: ${parsed.category}\n`;
+      if (parsed.merchant) content += `🏪 Merchant: ${parsed.merchant}\n`;
+      if (parsed.date) content += `📅 Date: ${parsed.date}\n`;
+      if (parsed.payment_method) content += `💳 Payment: ${parsed.payment_method}\n`;
+
+      content += '\nWould you like to create this expense?';
+
+      return {
+        content,
+        data: {
+          amount: parsed.amount || 0,
+          currency: parsed.currency || 'USD',
+          category: parsed.category,
+          subcategory: parsed.subcategory,
+          merchant: parsed.merchant,
+          description: parsed.description,
+          date: parsed.date || new Date().toISOString().split('T')[0],
+          payment_method: parsed.payment_method,
+        },
+      };
+    } catch (error) {
+      return {
+        content: 'I had trouble analyzing that receipt. Please try with a clearer image.',
+      };
+    }
+  };
+
   const handleAcceptSuggestion = (data: any) => {
     setAiSuggestion(data);
     setShowCreateDialog(true);
@@ -153,9 +239,13 @@ export default function ExpensesPage() {
         title="Expense AI Assistant"
         placeholder="Describe your expense..."
         onSendMessage={handleAIMessage}
+        onSendVoice={handleAIVoice}
+        onSendImage={handleAIImage}
         onAcceptSuggestion={handleAcceptSuggestion}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
+        supportsVoice={true}
+        supportsImage={true}
       />
 
       {/* Floating AI Button */}

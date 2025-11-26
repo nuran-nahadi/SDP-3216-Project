@@ -42,6 +42,7 @@ interface EventFormProps {
   onSubmit: (data: EventFormData) => Promise<void>;
   event?: Event;
   initialDate?: Date;
+  initialData?: Partial<EventFormData>;
 }
 
 const COLOR_OPTIONS = [
@@ -61,6 +62,7 @@ export function EventForm({
   onSubmit,
   event,
   initialDate,
+  initialData,
 }: EventFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -100,6 +102,24 @@ export function EventForm({
         color: event.color || '#8b5cf6',
       });
       setTags(event.tags || []);
+    } else if (initialData) {
+      // Set form with AI-parsed data
+      const startTime = initialData.start_time ? new Date(initialData.start_time) : new Date();
+      const endTime = initialData.end_time ? new Date(initialData.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
+
+      form.reset({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        location: initialData.location || '',
+        tags: initialData.tags || [],
+        is_all_day: initialData.is_all_day || false,
+        reminder_minutes: initialData.reminder_minutes || undefined,
+        recurrence_rule: initialData.recurrence_rule || '',
+        color: initialData.color || '#8b5cf6',
+      });
+      setTags(initialData.tags || []);
     } else if (initialDate) {
       // Set default times for new event
       const startTime = new Date(initialDate);
@@ -121,7 +141,7 @@ export function EventForm({
       });
       setTags([]);
     }
-  }, [event, initialDate, form]);
+  }, [event, initialDate, initialData, form]);
 
   const handleSubmit = async (data: EventFormData) => {
     try {

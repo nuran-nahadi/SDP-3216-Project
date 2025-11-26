@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { JournalEntry, JournalMood } from '@/lib/types/journal';
-import { getJournalEntries, deleteJournalEntry, getJournalStats, parseJournalText } from '@/lib/api/journal';
+import { getJournalEntries, deleteJournalEntry, getJournalStats, parseJournalText, parseVoice } from '@/lib/api/journal';
 import { JournalForm, JournalEntryCard } from '@/components/features/journal';
 import { AIChatPanel } from '@/components/shared/ai-chat-panel';
 import { AIFloatingButton } from '@/components/shared/ai-floating-button';
@@ -119,6 +119,59 @@ export default function JournalPage() {
     } catch (error) {
       return {
         content: 'I had trouble analyzing that. Could you try rephrasing or providing more details?',
+      };
+    }
+  };
+
+  const handleAIVoice = async (audioFile: File) => {
+    try {
+      const response = await parseVoice(audioFile);
+      
+      // Check if the response indicates failure
+      if (!response.success) {
+        const transcribedText = (response as any).transcribed_text || (response as any).data?.transcribed_text;
+        let errorContent = response.message || 'I had trouble understanding that.';
+        if (transcribedText) {
+          errorContent = `📝 I heard: "${transcribedText}"\n\n${errorContent}\n\nPlease try again with more details about your thoughts or feelings.`;
+        }
+        return {
+          content: errorContent,
+          transcribedText,
+        };
+      }
+
+      const parsed = response.data;
+
+      let content = 'I\'ve analyzed your voice input! Here\'s what I found:\n\n';
+      
+      if (parsed.title) content += `📝 Title: ${parsed.title}\n`;
+      if (parsed.mood) content += `😊 Mood: ${parsed.mood?.replace('_', ' ') || 'Not detected'}\n`;
+      if (parsed.weather) content += `🌤️ Weather: ${parsed.weather}\n`;
+      if (parsed.location) content += `📍 Location: ${parsed.location}\n`;
+      if (parsed.sentiment) content += `💭 Sentiment: ${parsed.sentiment}\n`;
+      if (parsed.keywords && parsed.keywords.length > 0) {
+        content += `🏷️ Keywords: ${parsed.keywords.join(', ')}\n`;
+      }
+
+      content += '\nWould you like to create a journal entry with this information?';
+
+      const transcribedText = parsed.transcribed_text || '';
+
+      return {
+        content,
+        transcribedText,
+        data: {
+          title: parsed.title || '',
+          content: transcribedText,
+          mood: parsed.mood as JournalMood,
+          weather: parsed.weather || '',
+          location: parsed.location || '',
+        },
+      };
+    } catch (error) {
+      console.error('Voice parsing error:', error);
+      return {
+        content: 'I had trouble understanding your voice message. Please try again or speak more clearly.',
       };
     }
   };
@@ -269,9 +322,12 @@ export default function JournalPage() {
         title="Journal AI Assistant"
         placeholder="Describe your day or feelings..."
         onSendMessage={handleAIMessage}
+        onSendVoice={handleAIVoice}
         onAcceptSuggestion={handleAcceptSuggestion}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
+        supportsVoice={true}
+        supportsImage={false}
       />
 
       {/* Floating AI Button */}

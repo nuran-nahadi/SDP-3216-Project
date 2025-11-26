@@ -156,6 +156,42 @@ export async function parseEventText(
   return response.data;
 }
 
+/**
+ * Parse natural language text into event data using AI
+ * @param text - Natural language description of event
+ * @returns Parsed event data with confidence score
+ */
+export async function parseText(
+  text: string
+): Promise<ApiResponse<ParsedEventData>> {
+  const response = await apiClient.post<ApiResponse<ParsedEventData>>(
+    '/events/ai/parse-text',
+    { text }
+  );
+  return response.data;
+}
+
+/**
+ * Parse voice recording into event data using AI
+ * @param file - Audio file
+ * @returns Parsed event data with confidence score and transcription
+ */
+export async function parseVoice(
+  file: File
+): Promise<ApiResponse<ParsedEventData & { transcribed_text?: string }>> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<
+    ApiResponse<ParsedEventData & { transcribed_text?: string }>
+  >('/events/ai/parse-voice', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+}
+
 // ============================================================================
 // Additional Utility Functions
 // ============================================================================

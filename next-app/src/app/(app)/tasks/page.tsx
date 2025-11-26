@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Task, TaskPriority, TaskStatus } from '@/lib/types/task';
 import { useTasks } from '@/lib/hooks/use-tasks';
 import { useTaskActions } from '@/lib/hooks/use-task-actions';
-import { parseText } from '@/lib/api/tasks';
+import { parseText, parseVoice } from '@/lib/api/tasks';
 import { TaskTabs, TaskList, TaskForm, TaskFilter } from '@/components/features/tasks';
 import { AIChatPanel } from '@/components/shared/ai-chat-panel';
 import { AIFloatingButton } from '@/components/shared/ai-floating-button';
@@ -99,6 +99,68 @@ export default function TasksPage() {
     } catch (error) {
       return {
         content: 'I had trouble understanding that. Could you describe the task differently?',
+      };
+    }
+  };
+
+  const handleAIVoice = async (audioFile: File) => {
+    try {
+      const response = await parseVoice(audioFile);
+      
+      // Check if the response indicates failure
+      if (!response.success) {
+        const transcribedText = (response as any).transcribed_text;
+        let errorContent = response.message || 'I had trouble understanding that.';
+        if (transcribedText) {
+          errorContent = `📝 I heard: "${transcribedText}"\n\n${errorContent}\n\nPlease try describing the task with more details.`;
+        }
+        return {
+          content: errorContent,
+          transcribedText,
+        };
+      }
+
+      const parsed = response.data;
+
+      let content = 'I\'ve analyzed your voice input! Here\'s what I found:\n\n';
+      
+      if (parsed.title) content += `📝 Title: ${parsed.title}\n`;
+      if (parsed.priority) content += `⚡ Priority: ${parsed.priority}\n`;
+      if (parsed.due_date) content += `📅 Due Date: ${parsed.due_date}\n`;
+      if (parsed.estimated_duration) content += `⏱️ Duration: ${parsed.estimated_duration} min\n`;
+      if (parsed.tags && parsed.tags.length > 0) {
+        content += `🏷️ Tags: ${parsed.tags.join(', ')}\n`;
+      }
+
+      content += '\nWould you like to create this task?';
+
+      // Convert date to datetime-local format if present
+      let formattedDueDate = '';
+      if (parsed.due_date) {
+        try {
+          const date = new Date(parsed.due_date);
+          formattedDueDate = date.toISOString().slice(0, 16);
+        } catch (e) {
+          formattedDueDate = '';
+        }
+      }
+
+      return {
+        content,
+        transcribedText: parsed.transcribed_text,
+        data: {
+          title: parsed.title || '',
+          description: parsed.description || '',
+          due_date: formattedDueDate,
+          priority: parsed.priority || TaskPriority.MEDIUM,
+          estimated_duration: parsed.estimated_duration || undefined,
+          tags: parsed.tags || [],
+        },
+      };
+    } catch (error) {
+      console.error('Voice parsing error:', error);
+      return {
+        content: 'I had trouble understanding your voice message. Please try again or speak more clearly.',
       };
     }
   };
@@ -213,9 +275,12 @@ export default function TasksPage() {
         title="Task AI Assistant"
         placeholder="Describe your task..."
         onSendMessage={handleAIMessage}
+        onSendVoice={handleAIVoice}
         onAcceptSuggestion={handleAcceptSuggestion}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
+        supportsVoice={true}
+        supportsImage={false}
       />
 
       {/* Floating AI Button */}

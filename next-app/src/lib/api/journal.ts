@@ -56,3 +56,26 @@ export async function parseJournalText(text: string): Promise<ApiResponse<any>> 
   const response = await apiClient.post<ApiResponse<any>>('/journal/parse', { text });
   return response.data;
 }
+
+/**
+ * Parse voice recording into journal data using AI
+ * @param file - Audio file
+ * @returns Parsed journal data with confidence score and transcription
+ */
+export async function parseVoice(
+  file: File
+): Promise<ApiResponse<any & { transcribed_text?: string }>> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post<ApiResponse<any & { transcribed_text?: string }>>(
+    '/journal/ai/parse-voice',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+}
