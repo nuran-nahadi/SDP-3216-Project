@@ -132,7 +132,8 @@ class UserPreferencesUpdate(BaseModel):
 
 # Legacy schemas for backward compatibility
 class UserCreate(BaseModel):
-    full_name: str
+    first_name: str
+    last_name: str
     username: str
     email: str
     password: str
@@ -141,8 +142,15 @@ class UserCreate(BaseModel):
         pass
 
 
-class UserUpdate(UserCreate):
-    pass
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+    class Config(BaseConfig):
+        pass
 
 
 class UserOut(BaseModel):

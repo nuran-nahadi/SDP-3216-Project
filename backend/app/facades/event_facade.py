@@ -300,25 +300,14 @@ class EventFacade:
                 parsed_data=ai_result,
                 message="Missing required fields",
             )
-        event_data = EventCreate(
-            title=ai_result["title"],
-            description=ai_result.get("description"),
-            start_time=ai_result["start_time"],
-            end_time=ai_result["end_time"],
-            location=ai_result.get("location"),
-            tags=ai_result.get("tags", []),
-            is_all_day=ai_result.get("is_all_day", False),
-            reminder_minutes=ai_result.get("reminder_minutes"),
-            recurrence_rule=ai_result.get("recurrence_rule"),
-            color=ai_result.get("color"),
-        )
-        created = self.create_event(event_data)
+        # Return parsed data without creating the event
+        # The frontend will create the event after user reviews and confirms
         return AIEventParseResponse(
             success=True,
-            data=created["data"],
+            data=ai_result,
             parsed_data=ai_result,
             confidence=ai_result.get("confidence"),
-            message="Event created successfully",
+            message="Event parsed successfully",
         )
 
     async def parse_voice_with_ai(self, file: UploadFile) -> AIEventParseResponse:
@@ -339,22 +328,11 @@ class EventFacade:
                 transcribed_text=ai_result.get("transcribed_text"),
                 message="Missing required fields",
             )
-        event_data = EventCreate(
-            title=ai_result["title"],
-            description=ai_result.get("description"),
-            start_time=ai_result["start_time"],
-            end_time=ai_result["end_time"],
-            location=ai_result.get("location"),
-            tags=ai_result.get("tags", []),
-            is_all_day=ai_result.get("is_all_day", False),
-            reminder_minutes=ai_result.get("reminder_minutes"),
-            recurrence_rule=ai_result.get("recurrence_rule"),
-            color=ai_result.get("color"),
-        )
-        created = self.create_event(event_data)
+        # Return parsed data without creating the event
+        # The frontend will create the event after user reviews and confirms
         return AIEventParseResponse(
             success=True,
-            data=created["data"],
+            data=ai_result,
             parsed_data=ai_result,
             confidence=ai_result.get("confidence"),
             transcribed_text=ai_result.get("transcribed_text"),

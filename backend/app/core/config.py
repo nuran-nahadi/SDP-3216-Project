@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -55,7 +56,8 @@ class Settings(BaseSettings):
         return f"postgresql://{self.db_username}:{self.db_password}@{self.db_hostname}:{self.db_port}/{self.db_name}"
 
     class Config:
-        env_file = ".env"
+        # Look for .env in the backend directory
+        env_file = str(Path(__file__).parent.parent.parent / ".env")
         extra = "forbid"  # This prevents extra fields from being allowed
 
 

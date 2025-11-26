@@ -153,8 +153,7 @@ class AITaskParseRequest(BaseModel):
 class AITaskParseResponse(BaseModel):
     """Response schema for AI-parsed task"""
     success: bool = True
-    data: Optional[TaskOut] = None
-    parsed_data: Optional[dict] = None
+    data: Optional[dict] = None  # Changed from TaskOut to dict since we return parsed data, not a created task
     confidence: Optional[float] = None
     transcribed_text: Optional[str] = None  # For voice inputs
     message: str = "Text parsed successfully"

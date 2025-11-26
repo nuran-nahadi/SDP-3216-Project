@@ -26,9 +26,11 @@ router = APIRouter(tags=["Tasks"], prefix="/tasks")
     description="Retrieve tasks with optional filters and pagination"
 )
 def get_tasks(
-    status_filter: Optional[TaskStatus] = Query(None, description="Filter by task status"),
+    status_filter: Optional[TaskStatus] = Query(None, alias="status", description="Filter by task status"),
     priority: Optional[TaskPriority] = Query(None, description="Filter by priority"),
     due_date: Optional[datetime] = Query(None, description="Filter by due date"),
+    start_date: Optional[datetime] = Query(None, description="Filter by start date range"),
+    end_date: Optional[datetime] = Query(None, description="Filter by end date range"),
     tags: Optional[List[str]] = Query(None, description="Filter by tags"),
     search: Optional[str] = Query(None, description="Search in title and description"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -38,7 +40,8 @@ def get_tasks(
 ):
     """List tasks with filters"""
     result = TaskService.get_tasks(
-        db, current_user, status_filter, priority, due_date, tags, search, page, limit
+        db, current_user, status_filter, priority, due_date, tags, search, page, limit,
+        start_date=start_date, end_date=end_date
     )
     return {
         "success": True,
@@ -219,10 +222,10 @@ def parse_task_text(
 # AI-powered endpoints
 @router.post(
     "/ai/parse-text",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AITaskParseResponse,
     summary="Parse task from text using AI",
-    description="Parse natural language text into task data using Gemini AI"
+    description="Parse natural language text into task data using Gemini AI (does not create task)"
 )
 async def parse_text_with_ai(
     request: AITaskParseRequest,
@@ -234,10 +237,10 @@ async def parse_text_with_ai(
 
 @router.post(
     "/ai/parse-voice",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AITaskParseResponse,
     summary="Parse task from voice using AI",
-    description="Parse voice recording into task data using Gemini AI"
+    description="Parse voice recording into task data using Gemini AI (does not create task)"
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),
@@ -245,11 +248,11 @@ async def parse_voice_with_ai(
     current_user: User = Depends(get_current_user())
 ):
     """Parse task from voice using AI"""
-    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a']
+    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/webm']
     if not file.content_type or file.content_type not in allowed_audio_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an audio file (MP3, WAV, M4A)"
+            detail="File must be an audio file (MP3, WAV, M4A, WebM)"
         )
     return await TaskService.parse_voice_with_ai(db, current_user, file)
 
