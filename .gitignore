@@ -73,6 +73,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Exception: Allow src/lib in Next.js app
+!next-app/src/lib/
+
 # Virtual Environments
 .env
 .venv
