@@ -13,6 +13,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from app.services.ai_service import ai_service
+from app.services.ai_rate_limit import ai_rate_limit
 
 
 router = APIRouter(tags=["Tasks"], prefix="/tasks")
@@ -264,6 +265,7 @@ async def parse_voice_with_ai(
     summary="AI Task Insights",
     description="Generate AI-powered insights and recommendations for the user's tasks"
 )
+@ai_rate_limit(feature="tasks:insights", key_param="current_user")
 async def get_task_ai_insights(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user())

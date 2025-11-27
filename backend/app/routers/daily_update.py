@@ -9,10 +9,12 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.db.database import get_db
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.models.models import User
 from app.services.daily_update import DailyUpdateService
 from app.services.ai_strategies.daily_update import daily_update_interviewer_strategy
+from app.services.ai_rate_limit import ai_rate_limit
 from app.schemas.daily_update import (
     PendingUpdateCreate,
     PendingUpdateEdit,
@@ -201,6 +203,12 @@ def get_conversation_state(
     response_model=DailyUpdateConversationResponse,
     summary="Send message to AI",
     description="Send a message to the AI interviewer and get a response"
+)
+@ai_rate_limit(
+    feature="daily_update:chat",
+    key_param="current_user",
+    requests=settings.daily_update_rate_limit_requests,
+    window_seconds=settings.daily_update_rate_limit_window_seconds,
 )
 async def chat_with_ai(
     session_id: UUID = Path(..., description="Session ID"),

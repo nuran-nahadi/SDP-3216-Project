@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     google_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
+    # AI Rate Limiting
+    ai_rate_limit_enabled: bool = True
+    ai_rate_limit_requests_per_window: int = 2
+    ai_rate_limit_window_seconds: int = 60
+    daily_update_rate_limit_requests: int = 2
+    daily_update_rate_limit_window_seconds: int = 60
+
     # Email Configuration (Optional)
     smtp_host: Optional[str] = None
     smtp_port: Optional[int] = None

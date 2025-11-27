@@ -28,6 +28,14 @@ from app.schemas.expenses import (
     TotalSpendData,
 )
 from app.utils.upload import upload_receipt_image
+from app.services.ai_rate_limit import ai_rate_limit
+
+
+def _facade_user_key(instance, *_args, **_kwargs) -> str:
+    """Build a stable rate-limit key using the bound user's id."""
+    user = getattr(instance, "_user", None)
+    user_id = getattr(user, "id", "anonymous")
+    return f"user:{user_id}"
 
 
 class ExpenseFacade:
@@ -441,6 +449,7 @@ class ExpenseFacade:
     # ------------------------------------------------------------------
     # AI powered helpers
     # ------------------------------------------------------------------
+    @ai_rate_limit(feature="expenses:parse_text", key_func=_facade_user_key)
     async def parse_text_with_ai(self, text: str) -> dict:
         from app.services.ai_service import ai_service
 
@@ -483,6 +492,7 @@ class ExpenseFacade:
                 "message": f"Error parsing text: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:parse_receipt", key_func=_facade_user_key)
     async def parse_receipt_with_ai(self, image_file: UploadFile) -> dict:
         from app.services.ai_service import ai_service
 
@@ -514,6 +524,7 @@ class ExpenseFacade:
                 "message": f"Error parsing receipt: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:parse_voice", key_func=_facade_user_key)
     async def parse_voice_with_ai(self, audio_file: UploadFile) -> dict:
         from app.services.ai_service import ai_service
 
@@ -548,6 +559,7 @@ class ExpenseFacade:
                 "message": f"Error parsing voice: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:insights", key_func=_facade_user_key)
     async def get_ai_insights(self, days: int = 30) -> dict:
         from app.services.ai_service import ai_service
 

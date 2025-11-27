@@ -17,6 +17,7 @@ from app.schemas.events import (
     EventOut,
     EventUpdate,
 )
+from app.services.ai_rate_limit import ai_rate_limit
 
 
 class EventFacade:
@@ -25,6 +26,10 @@ class EventFacade:
     def __init__(self, repository: EventRepository, user: User) -> None:
         self._repository = repository
         self._user = user
+
+    def _user_key(self, *_args, **_kwargs) -> str:
+        user_id = getattr(self._user, "id", "anonymous")
+        return f"user:{user_id}"
 
     # ------------------------------------------------------------------
     # CRUD operations
@@ -284,6 +289,7 @@ class EventFacade:
     # ------------------------------------------------------------------
     # AI helpers
     # ------------------------------------------------------------------
+    @ai_rate_limit(feature="events:parse_text", key_func=lambda self, *_, **__: self._user_key())
     async def parse_text_with_ai(self, text: str) -> AIEventParseResponse:
         from app.services.ai_service import ai_service
 
@@ -310,6 +316,7 @@ class EventFacade:
             message="Event parsed successfully",
         )
 
+    @ai_rate_limit(feature="events:parse_voice", key_func=lambda self, *_, **__: self._user_key())
     async def parse_voice_with_ai(self, file: UploadFile) -> AIEventParseResponse:
         from app.services.ai_service import ai_service
 

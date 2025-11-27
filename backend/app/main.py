@@ -1,8 +1,12 @@
 from app.routers import users, auth, accounts, user_profile, expenses, events, tasks, journal, daily_update
-from fastapi import FastAPI
+import math
+
+from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.services.decorators.rate_limit import RateLimitExceededError
 
 
 app = FastAPI(
@@ -56,3 +60,24 @@ def health_check():
         "version": "1.0.0",
         "auth_status": auth_status
     }
+
+
+@app.exception_handler(RateLimitExceededError)
+async def rate_limit_exception_handler(_: Request, exc: RateLimitExceededError):
+    """Return a standardized HTTP 429 response for rate limit violations."""
+    retry_after = max(1, math.ceil(exc.retry_after)) if exc.retry_after else 1
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "success": False,
+            "data": None,
+            "message": "Too many AI requests. Please slow down and try again soon.",
+            "meta": {
+                "feature": exc.feature,
+                "limit": exc.limit,
+                "window_seconds": exc.window_seconds,
+                "retry_after_seconds": exc.retry_after,
+            },
+        },
+        headers={"Retry-After": str(retry_after)},
+    )

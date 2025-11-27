@@ -8,6 +8,8 @@ from datetime import datetime, date, timedelta
 import json
 from uuid import UUID
 
+from app.services.ai_rate_limit import ai_rate_limit
+
 
 class TaskService:
     
@@ -449,6 +451,7 @@ class TaskService:
         return result
 
     @staticmethod
+    @ai_rate_limit(feature="tasks:parse_text", key_param="user")
     async def parse_text_with_ai(db: Session, user: User, text: str) -> dict:
         """Parse task from natural language text using AI"""
         from app.services.ai_service import ai_service
@@ -488,6 +491,7 @@ class TaskService:
             }
 
     @staticmethod
+    @ai_rate_limit(feature="tasks:parse_voice", key_param="user")
     async def parse_voice_with_ai(db: Session, user: User, audio_file) -> dict:
         """Parse task from voice recording using AI"""
         from app.services.ai_service import ai_service
