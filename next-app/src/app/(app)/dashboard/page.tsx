@@ -4,6 +4,7 @@ import { MetricCard } from '@/components/features/dashboard/metric-card';
 import { TodayTasksList } from '@/components/features/dashboard/today-tasks-list';
 import { WeeklyCalendarGrid } from '@/components/features/dashboard/weekly-calendar-grid';
 import { TaskCompletionHeatmap } from '@/components/features/dashboard/task-completion-heatmap';
+import { ExpenseHeatmap } from '@/components/features/dashboard/expense-heatmap';
 import { ExpenseCharts } from '@/components/features/dashboard/expense-charts';
 import { AIInsights } from '@/components/features/dashboard/ai-insights';
 import { DashboardSkeleton } from '@/components/features/dashboard/dashboard-skeleton';
@@ -133,9 +134,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Task Completion Heatmap */}
-            <div className="mb-8">
+            {/* Activity Heatmaps - Side by Side */}
+            <div className="grid gap-6 lg:grid-cols-2 mb-8">
               <TaskCompletionHeatmap />
+              <ExpenseHeatmap />
             </div>
 
             {/* Expense Analytics - Full Width for better chart visibility */}

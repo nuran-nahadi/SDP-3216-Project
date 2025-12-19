@@ -234,7 +234,7 @@ class DailyUpdateInterviewerStrategy(AIStrategy):
         
         # Configure the model with tools
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-2.5-flash-lite",
             system_instruction=DAILY_UPDATE_SYSTEM_INSTRUCTION,
             tools=[{"function_declarations": [CREATE_DRAFT_ENTRY_TOOL]}]
         )

@@ -12,7 +12,8 @@ import {
   User, 
   X,
   LogOut,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useAuth } from '@/lib/context/auth-context';
@@ -57,6 +58,11 @@ const navItems: NavItem[] = [
     label: 'Journal',
     href: '/journal',
     icon: BookOpen,
+  },
+  {
+    label: 'Notifications',
+    href: '/notifications',
+    icon: Bell,
   },
   {
     label: 'Profile',

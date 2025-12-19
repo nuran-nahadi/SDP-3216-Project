@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getTasks } from '@/lib/api/tasks';
-import { TaskStatus } from '@/lib/types/task';
+import { getExpenses } from '@/lib/api/expenses';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
-import { Activity } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import {
   format,
   subDays,
@@ -16,62 +15,77 @@ import {
 
 interface HeatmapData {
   date: Date;
-  count: number;
+  amount: number;
 }
 
-export function TaskCompletionHeatmap() {
+export function ExpenseHeatmap() {
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [hoveredDay, setHoveredDay] = useState<HeatmapData | null>(null);
 
-  const fetchCompletionData = useCallback(async () => {
+  const fetchExpenseData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get completed tasks from the last 3 months (90 days)
       const endDate = new Date();
       const startDate = subDays(endDate, 89); // 90 days including today
 
-      const response = await getTasks({
-        status: TaskStatus.COMPLETED,
-        limit: 100, // Maximum allowed by backend
-      });
+      // Fetch expenses with pagination (backend limit is 100)
+      let allExpenses: any[] = [];
+      let page = 1;
+      const pageLimit = 100;
+      
+      // Fetch up to 500 expenses (5 pages)
+      while (page <= 5) {
+        const response = await getExpenses({
+          page,
+          limit: pageLimit,
+        });
+        
+        if (response.data.length === 0) break;
+        allExpenses = [...allExpenses, ...response.data];
+        
+        // If we got less than the limit, we've reached the end
+        if (response.data.length < pageLimit) break;
+        page++;
+      }
 
-      // Create a map of dates to completion counts
-      const completionMap = new Map<string, number>();
+      const response = { data: allExpenses };
+
+      // Create a map of dates to expense amounts
+      const expenseMap = new Map<string, number>();
 
       // Initialize all days with 0
       const allDays = eachDayOfInterval({ start: startDate, end: endDate });
       allDays.forEach((day) => {
-        completionMap.set(format(day, 'yyyy-MM-dd'), 0);
+        expenseMap.set(format(day, 'yyyy-MM-dd'), 0);
       });
 
-      // Count completions per day
-      response.data.forEach((task) => {
-        if (task.completion_date) {
-          const completionDate = parseISO(task.completion_date);
-          const dateKey = format(completionDate, 'yyyy-MM-dd');
+      // Sum expenses per day
+      response.data.forEach((expense) => {
+        if (expense.date) {
+          const expenseDate = parseISO(expense.date);
+          const dateKey = format(expenseDate, 'yyyy-MM-dd');
           
-          // Only count if within our 90-day range
-          if (completionDate >= startDate && completionDate <= endDate) {
-            completionMap.set(dateKey, (completionMap.get(dateKey) || 0) + 1);
+          if (expenseDate >= startDate && expenseDate <= endDate) {
+            expenseMap.set(dateKey, (expenseMap.get(dateKey) || 0) + expense.amount);
           }
         }
       });
 
       // Convert map to array
-      const data: HeatmapData[] = Array.from(completionMap.entries()).map(
-        ([dateStr, count]) => ({
+      const data: HeatmapData[] = Array.from(expenseMap.entries()).map(
+        ([dateStr, amount]) => ({
           date: parseISO(dateStr),
-          count,
+          amount,
         })
       );
 
       setHeatmapData(data);
     } catch (err) {
-      console.error('Error fetching task completion data:', err);
+      console.error('Error fetching expense data:', err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -79,25 +93,26 @@ export function TaskCompletionHeatmap() {
   }, []);
 
   useEffect(() => {
-    fetchCompletionData();
-  }, [fetchCompletionData]);
+    fetchExpenseData();
+  }, [fetchExpenseData]);
 
-  const getIntensityColor = (count: number) => {
-    if (count === 0) return '#f3f4f6'; // Light gray for empty in light mode
-    if (count === 1) return 'rgba(139, 92, 246, 0.2)'; // 20% purple
-    if (count === 2) return 'rgba(139, 92, 246, 0.4)'; // 40% purple
-    if (count === 3) return 'rgba(139, 92, 246, 0.6)'; // 60% purple
-    if (count === 4) return 'rgba(139, 92, 246, 0.8)'; // 80% purple
-    return 'rgba(139, 92, 246, 1)'; // 100% purple
+  const getIntensityColor = (amount: number, maxAmount: number) => {
+    if (amount === 0) return '#f3f4f6';
+    const intensity = Math.min(amount / (maxAmount * 0.8), 1);
+    if (intensity <= 0.2) return 'rgba(245, 158, 11, 0.2)';
+    if (intensity <= 0.4) return 'rgba(245, 158, 11, 0.4)';
+    if (intensity <= 0.6) return 'rgba(245, 158, 11, 0.6)';
+    if (intensity <= 0.8) return 'rgba(245, 158, 11, 0.8)';
+    return 'rgba(245, 158, 11, 1)';
   };
 
-  const maxCount = Math.max(...heatmapData.map((d) => d.count), 0);
+  const maxAmount = Math.max(...heatmapData.map((d) => d.amount), 0);
 
   if (loading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
-          <CardTitle>Task Completion Activity</CardTitle>
+          <CardTitle>Expense Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center py-8">
@@ -110,13 +125,13 @@ export function TaskCompletionHeatmap() {
 
   if (error) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
-          <CardTitle>Task Completion Activity</CardTitle>
+          <CardTitle>Expense Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">
-            Failed to load activity data. Please try again.
+            Failed to load expense data. Please try again.
           </p>
         </CardContent>
       </Card>
@@ -125,15 +140,15 @@ export function TaskCompletionHeatmap() {
 
   if (heatmapData.length === 0) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
-          <CardTitle>Task Completion Activity</CardTitle>
+          <CardTitle>Expense Activity</CardTitle>
         </CardHeader>
         <CardContent>
           <EmptyState
-            icon={Activity}
-            title="No activity yet"
-            description="Complete tasks to see your activity heatmap."
+            icon={DollarSign}
+            title="No expenses yet"
+            description="Add expenses to see your spending heatmap."
           />
         </CardContent>
       </Card>
@@ -144,11 +159,9 @@ export function TaskCompletionHeatmap() {
   const weeks: (HeatmapData | null)[][] = [];
   let currentWeek: (HeatmapData | null)[] = [];
   
-  // Get the first day and pad the beginning if needed
   const firstDayOfWeek = heatmapData[0]?.date.getDay() || 0;
-  const adjustedFirstDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Monday = 0
+  const adjustedFirstDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   
-  // Pad the first week with nulls
   for (let i = 0; i < adjustedFirstDay; i++) {
     currentWeek.push(null);
   }
@@ -161,7 +174,6 @@ export function TaskCompletionHeatmap() {
     }
   });
   
-  // Push remaining days
   if (currentWeek.length > 0) {
     while (currentWeek.length < 7) {
       currentWeek.push(null);
@@ -169,9 +181,8 @@ export function TaskCompletionHeatmap() {
     weeks.push(currentWeek);
   }
   
-  // Calculate month labels with proper positioning
-  const cellSize = 14; // w-3.5 = 14px
-  const gap = 2; // gap-0.5 = 2px
+  const cellSize = 14;
+  const gap = 2;
   const monthLabels: { name: string; position: number }[] = [];
   let lastMonth = '';
   
@@ -194,12 +205,12 @@ export function TaskCompletionHeatmap() {
       <CardHeader className="border-b bg-muted/30">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Task Completion Activity
+            <DollarSign className="h-5 w-5 text-amber-500" />
+            Expense Activity
           </CardTitle>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
-          Last 3 months • {maxCount > 0 ? `Peak: ${maxCount} tasks/day` : 'No tasks completed'}
+          Last 3 months • {maxAmount > 0 ? `Peak: $${maxAmount.toFixed(2)}/day` : 'No expenses recorded'}
         </p>
       </CardHeader>
       <CardContent className="pt-6">
@@ -241,12 +252,12 @@ export function TaskCompletionHeatmap() {
                       key={`${weekIndex}-${dayIndex}`}
                       className="w-3.5 h-3.5 rounded-sm cursor-pointer transition-all duration-200"
                       style={{
-                        backgroundColor: day ? getIntensityColor(day.count) : 'transparent',
-                        border: day ? '1px solid rgba(139, 92, 246, 0.2)' : 'none'
+                        backgroundColor: day ? getIntensityColor(day.amount, maxAmount) : 'transparent',
+                        border: day ? '1px solid rgba(245, 158, 11, 0.2)' : 'none'
                       }}
                       onMouseEnter={() => day && setHoveredDay(day)}
                       onMouseLeave={() => setHoveredDay(null)}
-                      title={day ? `${format(day.date, 'MMM d, yyyy')}: ${day.count} tasks` : ''}
+                      title={day ? `${format(day.date, 'MMM d, yyyy')}: $${day.amount.toFixed(2)}` : ''}
                     />
                   ))}
                 </div>
@@ -261,21 +272,21 @@ export function TaskCompletionHeatmap() {
                 {format(hoveredDay.date, 'MMMM d, yyyy')}
               </div>
               <div className="text-muted-foreground mt-1">
-                {hoveredDay.count} {hoveredDay.count === 1 ? 'task' : 'tasks'} completed
+                ${hoveredDay.amount.toFixed(2)} spent
               </div>
             </div>
           )}
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-3 mt-6 text-xs p-3 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)', color: '#9ca3af' }}>
+          <div className="flex items-center justify-center gap-3 mt-6 text-xs p-3 rounded-lg" style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', color: '#9ca3af' }}>
             <span className="font-medium">Less</span>
             <div className="flex gap-1.5">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f3f4f6', border: '1px solid rgba(139, 92, 246, 0.2)' }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.3)' }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(139, 92, 246, 0.4)', border: '1px solid rgba(139, 92, 246, 0.5)' }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(139, 92, 246, 0.6)', border: '1px solid rgba(139, 92, 246, 0.7)' }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(139, 92, 246, 0.8)', border: '1px solid rgba(139, 92, 246, 0.9)' }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(139, 92, 246, 1)', border: '1px solid rgba(139, 92, 246, 1)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f3f4f6', border: '1px solid rgba(245, 158, 11, 0.2)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.3)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(245, 158, 11, 0.4)', border: '1px solid rgba(245, 158, 11, 0.5)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(245, 158, 11, 0.6)', border: '1px solid rgba(245, 158, 11, 0.7)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(245, 158, 11, 0.8)', border: '1px solid rgba(245, 158, 11, 0.9)' }} />
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(245, 158, 11, 1)', border: '1px solid rgba(245, 158, 11, 1)' }} />
             </div>
             <span className="font-medium">More</span>
           </div>

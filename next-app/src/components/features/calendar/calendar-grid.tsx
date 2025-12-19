@@ -178,13 +178,17 @@ export function CalendarGrid({
               <button
                 key={`day-${day}`}
                 onClick={() => handleDateClick(day)}
+                style={{
+                  backgroundColor: isTodayDate ? '#8b5cf6' : undefined,
+                  color: isTodayDate ? 'white' : undefined,
+                  borderColor: isTodayDate ? '#8b5cf6' : undefined,
+                }}
                 className={cn(
                   'min-h-20 md:min-h-24 p-1 md:p-2 rounded-lg border transition-colors',
                   'hover:bg-accent hover:border-primary',
                   'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                   'flex flex-col items-start',
-                  isTodayDate &&
-                    'bg-primary text-primary-foreground font-bold border-primary shadow-md ring-2 ring-primary/20',
+                  isTodayDate && 'font-bold shadow-md',
                   !isTodayDate && 'border-border',
                   hasEventsOnDay && !isTodayDate && 'bg-accent/50'
                 )}
@@ -196,13 +200,10 @@ export function CalendarGrid({
                     {dayEvents.slice(0, 3).map((event) => (
                       <div
                         key={event.id}
-                        className={cn(
-                          'text-[9px] md:text-[10px] px-1 py-0.5 rounded truncate font-medium',
-                          isTodayDate
-                            ? 'bg-white/20 text-white'
-                            : 'bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-100'
-                        )}
+                        className="text-[9px] md:text-[10px] px-1 py-0.5 rounded truncate font-medium"
                         style={{
+                          backgroundColor: isTodayDate ? 'rgba(255, 255, 255, 0.2)' : 'rgba(139, 92, 246, 0.15)',
+                          color: isTodayDate ? 'white' : '#6b21a8',
                           borderLeft: `2px solid ${event.color || '#8b5cf6'}`,
                         }}
                         title={event.title}
@@ -212,12 +213,10 @@ export function CalendarGrid({
                     ))}
                     {dayEvents.length > 3 && (
                       <div
-                        className={cn(
-                          'text-[9px] md:text-[10px] px-1 font-medium',
-                          isTodayDate
-                            ? 'text-white/80'
-                            : 'text-muted-foreground'
-                        )}
+                        className="text-[9px] md:text-[10px] px-1 font-medium"
+                        style={{
+                          color: isTodayDate ? 'rgba(255, 255, 255, 0.8)' : '#6b7280'
+                        }}
                       >
                         +{dayEvents.length - 3} more
                       </div>
@@ -233,7 +232,7 @@ export function CalendarGrid({
       {/* Mobile-friendly legend */}
       <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-primary" />
+          <div className="w-3 h-3 rounded" style={{ backgroundColor: '#8b5cf6' }} />
           <span>Today</span>
         </div>
         <div className="flex items-center gap-1">

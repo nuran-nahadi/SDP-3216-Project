@@ -42,3 +42,5 @@ SpeechRecognition
 pydub
 ffmpeg-python
 python-magic
+resend>=0.7.0
+APScheduler>=3.10.0

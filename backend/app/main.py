@@ -1,4 +1,4 @@
-from app.routers import users, auth, accounts, user_profile, expenses, events, tasks, journal, daily_update
+from app.routers import users, auth, accounts, user_profile, expenses, events, tasks, journal, daily_update, notifications
 import math
 
 from fastapi import FastAPI, Request, status
@@ -45,6 +45,7 @@ app.include_router(expenses.router)      # Expense management endpoints
 app.include_router(tasks.router)         # Task management endpoints
 app.include_router(journal.router)       # Journal management endpoints
 app.include_router(daily_update.router)  # Daily update AI agent endpoints
+app.include_router(notifications.router) # Email notification endpoints
 app.include_router(users.router)         # Legacy admin user management
 app.include_router(accounts.router)
 

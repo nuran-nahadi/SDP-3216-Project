@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     smtp_password: Optional[str] = None
     email_from: Optional[str] = None
 
+    # Resend Configuration (Email)
+    resend_api_key: Optional[str] = None
+    resend_from_email: str = "notification@sdp-lab.fahiim.me"
+    
+    # Frontend URL
+    frontend_url: str = "http://localhost:3000"
+
     # Development Settings
     debug: bool = False
     log_level: str = "INFO"
