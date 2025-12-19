@@ -208,7 +208,7 @@ export function EventModal({
         open={deleteEventId !== null}
         onOpenChange={(open) => !open && setDeleteEventId(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border shadow-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Event</AlertDialogTitle>
             <AlertDialogDescription>

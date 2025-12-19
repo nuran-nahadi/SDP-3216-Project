@@ -13,8 +13,26 @@ export function handleApiError(error: unknown): string {
   if (error instanceof AxiosError) {
     if (error.response) {
       // Server responded with error
-      const apiError = error.response.data as ApiError;
-      return apiError.error?.message || 'An error occurred';
+      const data = error.response.data;
+      
+      // FastAPI returns errors in 'detail' field
+      if (typeof data?.detail === 'string') {
+        return data.detail;
+      }
+      
+      // Handle validation errors (array of details)
+      if (Array.isArray(data?.detail)) {
+        return data.detail.map((d: { msg?: string }) => d.msg || 'Validation error').join(', ');
+      }
+      
+      // Legacy format with error.message
+      const apiError = data as ApiError;
+      if (apiError.error?.message) {
+        return apiError.error.message;
+      }
+      
+      // Fallback to status text
+      return error.response.statusText || 'An error occurred';
     } else if (error.request) {
       // Request made but no response
       return 'Network error. Please check your connection.';

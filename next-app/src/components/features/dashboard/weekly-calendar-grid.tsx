@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { getWeekEvents } from '@/lib/api/events';
 import { Event } from '@/lib/types';
 import { useEventBus } from '@/lib/hooks/use-event-bus';

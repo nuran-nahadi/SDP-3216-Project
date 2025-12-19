@@ -172,6 +172,8 @@ export function ExpenseCharts() {
                       fill="#8884d8"
                       dataKey="amount"
                       nameKey="category"
+                      stroke="hsl(var(--background))"
+                      strokeWidth={2}
                     >
                       {categoryData.map((entry, index) => (
                         <Cell
@@ -182,8 +184,17 @@ export function ExpenseCharts() {
                     </Pie>
                     <Tooltip
                       formatter={(value: number) => `$${value.toFixed(2)}`}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{
+                        paddingTop: '20px',
+                      }}
+                    />
                   </RechartsPieChart>
                 </ResponsiveContainer>
 
@@ -230,24 +241,36 @@ export function ExpenseCharts() {
               <div className="space-y-4">
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                     <XAxis
                       dataKey="date"
                       tickFormatter={(date) => format(parseISO(date), 'MMM d')}
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
                     />
-                    <YAxis tickFormatter={(value) => `$${value}`} />
+                    <YAxis 
+                      tickFormatter={(value) => `$${value}`} 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
                     <Tooltip
                       labelFormatter={(date) =>
                         format(parseISO(date as string), 'MMMM d, yyyy')
                       }
                       formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
                     />
                     <Line
                       type="monotone"
                       dataKey="amount"
                       stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--primary))' }}
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>

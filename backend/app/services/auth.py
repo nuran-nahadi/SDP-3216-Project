@@ -70,12 +70,17 @@ class AuthService:
 
     @staticmethod
     async def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-        user = db.query(User).filter(User.username == user_credentials.username).first()
+        # Support login with either username or email
+        user = db.query(User).filter(
+            (User.username == user_credentials.username) | 
+            (User.email == user_credentials.username)
+        ).first()
+        
         if not user:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid username/email or password")
 
         if not verify_password(user_credentials.password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid username/email or password")
 
         return await get_user_token(id=user.id)
 

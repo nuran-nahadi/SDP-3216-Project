@@ -18,9 +18,8 @@ export function isValidEmail(email: string): boolean {
  * Password strength validation
  */
 export function isStrongPassword(password: string): boolean {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-  return passwordRegex.test(password);
+  // At least 4 characters
+  return password.length >= 4;
 }
 
 /**
@@ -65,10 +64,7 @@ export const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/\d/, 'Password must contain at least one number'),
+    .min(4, 'Password must be at least 4 characters'),
   first_name: z.string().min(1, 'First name is required').max(50),
   last_name: z.string().min(1, 'Last name is required').max(50),
 });

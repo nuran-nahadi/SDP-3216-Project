@@ -26,7 +26,7 @@ export function DeleteExpenseDialog({
 }: DeleteExpenseDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white dark:bg-zinc-950 border shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Expense</AlertDialogTitle>
           <AlertDialogDescription>

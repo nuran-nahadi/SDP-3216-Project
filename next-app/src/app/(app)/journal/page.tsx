@@ -293,7 +293,7 @@ export default function JournalPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-950 border shadow-xl">
           <DialogHeader>
             <DialogTitle>
               {editingEntry ? 'Edit Journal Entry' : 'New Journal Entry'}
@@ -335,7 +335,7 @@ export default function JournalPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingEntryId} onOpenChange={(open) => !open && setDeletingEntryId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border shadow-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Journal Entry</AlertDialogTitle>
             <AlertDialogDescription>

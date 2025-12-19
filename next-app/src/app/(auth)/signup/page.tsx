@@ -123,9 +123,6 @@ export default function SignupPage() {
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
-              <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters with uppercase, lowercase, and number
-              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

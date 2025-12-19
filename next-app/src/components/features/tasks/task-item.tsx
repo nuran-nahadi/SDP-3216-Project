@@ -177,7 +177,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
 
       {/* Completion Dialog */}
       <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
-        <DialogContent>
+        <DialogContent className="bg-white dark:bg-zinc-950 border shadow-xl">
           <DialogHeader>
             <DialogTitle>Complete Task</DialogTitle>
             <DialogDescription>
@@ -212,7 +212,7 @@ export function TaskItem({ task, onComplete, onEdit, onDelete }: TaskItemProps) 
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border shadow-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Task</AlertDialogTitle>
             <AlertDialogDescription>

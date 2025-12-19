@@ -198,8 +198,8 @@
     color: hsl(var(--primary-foreground)) !important;
   }
   
-  /* Tab active state */
-  [data-state="active"] {
+  /* Tab trigger active state - only apply to tab triggers, not tab content */
+  [role="tablist"] [data-state="active"] {
     background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.8)) !important;
     color: hsl(var(--primary-foreground)) !important;
     box-shadow: inset 0 1px 0 0 hsl(var(--primary-foreground) / 0.1), 0 1px 3px 0 hsl(var(--primary) / 0.3) !important;
