@@ -8,6 +8,7 @@ import { taskSchema, TaskFormData } from '@/lib/utils/validators';
 import { createTask, updateTask } from '@/lib/api/tasks';
 import { eventBus } from '@/lib/utils/event-bus';
 import { TASK_CREATED, TASK_UPDATED } from '@/lib/utils/event-types';
+import { isoToDatetimeLocal } from '@/lib/utils/date';
 import { handleApiError } from '@/lib/utils/error-handler';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,12 +44,19 @@ export function TaskForm({ task, initialData, onSuccess, onCancel }: TaskFormPro
   const [tagInput, setTagInput] = useState('');
   const isEditMode = !!task;
 
+  // Convert task due_date to datetime-local format if it exists
+  const getInitialDueDate = () => {
+    if (initialData?.due_date) return initialData.due_date;
+    if (task?.due_date) return isoToDatetimeLocal(task.due_date);
+    return '';
+  };
+
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: initialData?.title || task?.title || '',
       description: initialData?.description || task?.description || '',
-      due_date: initialData?.due_date || task?.due_date || '',
+      due_date: getInitialDueDate(),
       priority: initialData?.priority || task?.priority || TaskPriority.MEDIUM,
       estimated_duration: initialData?.estimated_duration || task?.estimated_duration || undefined,
       tags: initialData?.tags || task?.tags || [],
@@ -61,7 +69,7 @@ export function TaskForm({ task, initialData, onSuccess, onCancel }: TaskFormPro
     form.reset({
       title: initialData?.title || task?.title || '',
       description: initialData?.description || task?.description || '',
-      due_date: initialData?.due_date || task?.due_date || '',
+      due_date: getInitialDueDate(),
       priority: initialData?.priority || task?.priority || TaskPriority.MEDIUM,
       estimated_duration: initialData?.estimated_duration || task?.estimated_duration || undefined,
       tags: initialData?.tags || task?.tags || [],
@@ -93,12 +101,18 @@ export function TaskForm({ task, initialData, onSuccess, onCancel }: TaskFormPro
     try {
       setIsSubmitting(true);
 
+      // Convert datetime-local format to ISO for backend if due_date exists
+      const submitData = {
+        ...data,
+        due_date: data.due_date ? new Date(data.due_date).toISOString() : undefined,
+      };
+
       if (isEditMode && task) {
-        const response = await updateTask(task.id, data);
+        const response = await updateTask(task.id, submitData);
         eventBus.publish(TASK_UPDATED, response.data);
         toast.success('Task updated successfully');
       } else {
-        const response = await createTask(data);
+        const response = await createTask(submitData);
         eventBus.publish(TASK_CREATED, response.data);
         toast.success('Task created successfully');
       }

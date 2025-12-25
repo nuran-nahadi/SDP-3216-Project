@@ -186,3 +186,24 @@ export function formatForAPI(date: Date): string {
 export function parseISODate(dateString: string): Date {
   return parseISO(dateString);
 }
+
+/**
+ * Convert ISO datetime string to datetime-local format (YYYY-MM-DDTHH:MM)
+ * This preserves the local time without timezone conversion.
+ * Used for datetime-local HTML input fields.
+ * 
+ * @param isoString ISO datetime string (e.g., "2025-12-26T20:00:00")
+ * @returns datetime-local format string (e.g., "2025-12-26T20:00")
+ */
+export function isoToDatetimeLocal(isoString: string): string {
+  if (!isoString) return '';
+  
+  try {
+    // Parse the ISO string and extract the datetime-local format
+    // We slice off the seconds and milliseconds
+    const match = isoString.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+    return match ? match[1] : '';
+  } catch {
+    return '';
+  }
+}

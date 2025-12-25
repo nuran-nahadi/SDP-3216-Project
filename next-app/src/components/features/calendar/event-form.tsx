@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { isoToDatetimeLocal } from '@/lib/utils/date';
 import { Calendar, Clock, MapPin, Tag, X } from 'lucide-react';
 import {
   Dialog,
@@ -92,8 +93,8 @@ export function EventForm({
       form.reset({
         title: event.title,
         description: event.description || '',
-        start_time: event.start_time,
-        end_time: event.end_time,
+        start_time: isoToDatetimeLocal(event.start_time),
+        end_time: isoToDatetimeLocal(event.end_time),
         location: event.location || '',
         tags: event.tags || [],
         is_all_day: event.is_all_day,
@@ -103,15 +104,15 @@ export function EventForm({
       });
       setTags(event.tags || []);
     } else if (initialData) {
-      // Set form with AI-parsed data
-      const startTime = initialData.start_time ? new Date(initialData.start_time) : new Date();
-      const endTime = initialData.end_time ? new Date(initialData.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
+      // Set form with AI-parsed data (already in datetime-local format)
+      const startTime = initialData.start_time || '';
+      const endTime = initialData.end_time || '';
 
       form.reset({
         title: initialData.title || '',
         description: initialData.description || '',
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        start_time: startTime,
+        end_time: endTime,
         location: initialData.location || '',
         tags: initialData.tags || [],
         is_all_day: initialData.is_all_day || false,
@@ -146,7 +147,16 @@ export function EventForm({
   const handleSubmit = async (data: EventFormData) => {
     try {
       setIsSubmitting(true);
-      await onSubmit({ ...data, tags });
+      
+      // Convert datetime-local format to ISO for backend
+      const submitData = {
+        ...data,
+        tags,
+        start_time: data.start_time ? new Date(data.start_time).toISOString() : '',
+        end_time: data.end_time ? new Date(data.end_time).toISOString() : '',
+      };
+      
+      await onSubmit(submitData);
       form.reset();
       setTags([]);
       onClose();
@@ -258,18 +268,6 @@ export function EventForm({
                       <Input
                         type="datetime-local"
                         {...field}
-                        value={
-                          field.value
-                            ? format(
-                                new Date(field.value),
-                                "yyyy-MM-dd'T'HH:mm"
-                              )
-                            : ''
-                        }
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          field.onChange(date.toISOString());
-                        }}
                         disabled={isSubmitting}
                       />
                     </FormControl>
@@ -288,18 +286,6 @@ export function EventForm({
                       <Input
                         type="datetime-local"
                         {...field}
-                        value={
-                          field.value
-                            ? format(
-                                new Date(field.value),
-                                "yyyy-MM-dd'T'HH:mm"
-                              )
-                            : ''
-                        }
-                        onChange={(e) => {
-                          const date = new Date(e.target.value);
-                          field.onChange(date.toISOString());
-                        }}
                         disabled={isSubmitting}
                       />
                     </FormControl>

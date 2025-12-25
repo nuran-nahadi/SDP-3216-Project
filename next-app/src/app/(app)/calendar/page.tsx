@@ -14,6 +14,7 @@ import { EventFormData } from '@/lib/utils/validators';
 import { AIChatPanel } from '@/components/shared/ai-chat-panel';
 import { AIFloatingButton } from '@/components/shared/ai-floating-button';
 import { parseText, parseVoice } from '@/lib/api/events';
+import { isoToDatetimeLocal } from '@/lib/utils/date';
 import { cn } from '@/lib/utils/cn';
 
 export default function CalendarPage() {
@@ -94,8 +95,8 @@ export default function CalendarPage() {
         data: {
           title: parsed.title || '',
           description: parsed.description || '',
-          start_time: parsed.start_time,
-          end_time: parsed.end_time,
+          start_time: parsed.start_time ? isoToDatetimeLocal(parsed.start_time) : '',
+          end_time: parsed.end_time ? isoToDatetimeLocal(parsed.end_time) : '',
           location: parsed.location || '',
           is_all_day: parsed.is_all_day || false,
           tags: parsed.tags || [],
@@ -146,8 +147,8 @@ export default function CalendarPage() {
         data: {
           title: parsed.title || '',
           description: parsed.description || '',
-          start_time: parsed.start_time,
-          end_time: parsed.end_time,
+          start_time: parsed.start_time ? isoToDatetimeLocal(parsed.start_time) : '',
+          end_time: parsed.end_time ? isoToDatetimeLocal(parsed.end_time) : '',
           location: parsed.location || '',
           is_all_day: parsed.is_all_day || false,
           tags: parsed.tags || [],

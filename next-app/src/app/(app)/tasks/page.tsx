@@ -5,6 +5,7 @@ import { Task, TaskPriority, TaskStatus } from '@/lib/types/task';
 import { useTasks } from '@/lib/hooks/use-tasks';
 import { useTaskActions } from '@/lib/hooks/use-task-actions';
 import { parseText, parseVoice } from '@/lib/api/tasks';
+import { isoToDatetimeLocal } from '@/lib/utils/date';
 import { TaskTabs, TaskList, TaskForm, TaskFilter } from '@/components/features/tasks';
 import { AIChatPanel } from '@/components/shared/ai-chat-panel';
 import { AIFloatingButton } from '@/components/shared/ai-floating-button';
@@ -74,16 +75,7 @@ export default function TasksPage() {
       content += '\nWould you like to create this task?';
 
       // Convert date to datetime-local format if present
-      let formattedDueDate = '';
-      if (parsed.due_date) {
-        try {
-          const date = new Date(parsed.due_date);
-          // Format as YYYY-MM-DDTHH:MM for datetime-local input
-          formattedDueDate = date.toISOString().slice(0, 16);
-        } catch (e) {
-          formattedDueDate = '';
-        }
-      }
+      const formattedDueDate = parsed.due_date ? isoToDatetimeLocal(parsed.due_date) : '';
 
       return {
         content,
@@ -135,15 +127,7 @@ export default function TasksPage() {
       content += '\nWould you like to create this task?';
 
       // Convert date to datetime-local format if present
-      let formattedDueDate = '';
-      if (parsed.due_date) {
-        try {
-          const date = new Date(parsed.due_date);
-          formattedDueDate = date.toISOString().slice(0, 16);
-        } catch (e) {
-          formattedDueDate = '';
-        }
-      }
+      const formattedDueDate = parsed.due_date ? isoToDatetimeLocal(parsed.due_date) : '';
 
       return {
         content,
