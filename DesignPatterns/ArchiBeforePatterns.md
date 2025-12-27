@@ -83,8 +83,3 @@
 - `backend/apitests` houses pytest suites that exercise key endpoints using FastAPI's TestClient.
 - There is no CI configuration in-repo; manual test execution via `pytest backend/apitests` is implied.
 - AI features rely on live external services; tests may require valid API keys and network connectivity.
-
-## Next Steps for Pattern Introduction
-- Continue rolling the facade/repository pattern to remaining aggregates (tasks, journals, accounts) to keep router logic consistent.
-- Identify cross-cutting concerns (e.g., error handling, transaction management) that could benefit from additional patterns (Factory, Strategy, Adapter) without disrupting the new layering.
-- Evaluate areas where synchronous facade methods should become async or use patterns to isolate I/O-heavy AI integrations.
