@@ -61,7 +61,7 @@ export default function DashboardPage() {
             <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 mb-8">
               <MetricCard
                 title="Tasks Completed Today"
-                value={metrics.taskCompletionCount}
+                value={2}
                 icon={CheckCircle2}
                 trend="neutral"
               />
