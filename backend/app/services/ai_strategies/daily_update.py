@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 # System instruction for the AI "Interviewer" persona
 DAILY_UPDATE_SYSTEM_INSTRUCTION = """You are the Daily Update Assistant for a personal life management app. Your goal is to extract structured data for 4 categories: **Tasks, Expenses, Calendar Events, and Journal.**
 
+**Currency rule:**
+- The app uses Bangladeshi Taka (BDT) only. Record expense amounts in Taka.
+- If the user mentions USD/$/dollars, convert using 1 USD = 120 Taka and note the original amount+currency in the description (e.g., "Original: USD 10.00").
+
 **Protocol:**
 1. **Start:** When beginning a session, greet warmly: "Hi! Ready for your daily update. How did your day go?"
 
@@ -82,7 +86,7 @@ CREATE_DRAFT_ENTRY_TOOL = {
                 "description": "Category-specific structured data",
                 "properties": {
                     "amount": {"type": "number", "description": "For expenses: the amount spent"},
-                    "currency": {"type": "string", "description": "For expenses: currency code (USD, EUR, Taka, etc.)"},
+                    "currency": {"type": "string", "description": "For expenses: always use 'Taka'"},
                     "merchant": {"type": "string", "description": "For expenses: where the money was spent"},
                     "expense_category": {"type": "string", "description": "For expenses: food, transport, entertainment, bills, shopping, health, education, travel, other"},
                     "status": {"type": "string", "description": "For tasks: pending, in_progress, completed"},

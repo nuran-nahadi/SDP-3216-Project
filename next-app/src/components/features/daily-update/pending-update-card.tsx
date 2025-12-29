@@ -3,7 +3,6 @@
 import React from 'react';
 import { 
   CheckSquare, 
-  DollarSign, 
   Calendar, 
   BookOpen,
   Clock,
@@ -17,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PendingUpdate, UpdateCategory, UpdateStatus } from '@/lib/types/daily-update';
 import { cn } from '@/lib/utils/cn';
+import { TakaIcon } from '@/components/shared/taka-icon';
+import { formatTaka } from '@/lib/utils/currency';
 
 interface PendingUpdateCardProps {
   update: PendingUpdate;
@@ -40,7 +41,7 @@ const categoryConfig: Record<UpdateCategory, {
     bgColor: 'bg-blue-100 dark:bg-blue-900/30'
   },
   expense: { 
-    icon: DollarSign, 
+    icon: TakaIcon, 
     label: 'Expense', 
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100 dark:bg-green-900/30'
@@ -93,7 +94,7 @@ function formatStructuredData(category: UpdateCategory, data: Record<string, unk
       return (
         <div className="space-y-1 text-sm">
           {hasValue('description') && <p><span className="font-medium">Description:</span> {getValue('description')}</p>}
-          {hasValue('amount') && <p><span className="font-medium">Amount:</span> ${Number(data.amount).toFixed(2)}</p>}
+          {hasValue('amount') && <p><span className="font-medium">Amount:</span> {formatTaka(Number(data.amount))}</p>}
           {hasValue('category') && <p><span className="font-medium">Category:</span> {getValue('category')}</p>}
           {hasValue('date') && <p><span className="font-medium">Date:</span> {getValue('date')}</p>}
         </div>

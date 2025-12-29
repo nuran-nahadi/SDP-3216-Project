@@ -47,6 +47,8 @@ class SpendingInsightsStrategy(AIStrategy):
         return f"""
 Analyze the following expense data and provide insights in JSON format:
 
+All amounts are in Bangladeshi Taka (BDT). Use the symbol "৳" in the insight text when referencing money.
+
 Total spending: {total_amount} Taka
 Category breakdown: {json.dumps(categories, indent=2)}
 Number of transactions: {count}

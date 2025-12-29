@@ -105,7 +105,7 @@ class ExpenseFacade:
         try:
             payload = {
                 "amount": expense_data.amount,
-                "currency": expense_data.currency,
+                "currency": "Taka",
                 "category": expense_data.category,
                 "subcategory": expense_data.subcategory,
                 "merchant": expense_data.merchant,
@@ -161,6 +161,8 @@ class ExpenseFacade:
             update_data["tags"] = (
                 json.dumps(update_data["tags"]) if update_data["tags"] else None
             )
+        if "currency" in update_data:
+            update_data["currency"] = "Taka"
 
         try:
             updated = self._repository.update(expense, update_data)

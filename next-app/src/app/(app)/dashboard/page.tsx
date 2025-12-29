@@ -15,9 +15,10 @@ import { usePendingSummary } from '@/lib/hooks/use-daily-update';
 import {
   CheckCircle2,
   Calendar,
-  DollarSign,
   TrendingUp,
 } from 'lucide-react';
+import { TakaIcon } from '@/components/shared/taka-icon';
+import { formatTaka } from '@/lib/utils/currency';
 
 export default function DashboardPage() {
   const { metrics, loading, error } = useDashboardMetrics();
@@ -73,9 +74,9 @@ export default function DashboardPage() {
               />
               <MetricCard
                 title="Monthly Expenses"
-                value={`$${metrics.totalExpense.toFixed(2)}`}
+                value={formatTaka(metrics.totalExpense)}
                 change={metrics.expenseChange}
-                icon={DollarSign}
+                icon={TakaIcon}
                 trend={
                   metrics.expenseChangeDirection === 'increase'
                     ? 'up'

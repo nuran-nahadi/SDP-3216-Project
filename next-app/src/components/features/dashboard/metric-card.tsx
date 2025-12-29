@@ -1,14 +1,17 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpIcon, ArrowDownIcon, LucideIcon } from 'lucide-react';
+import React from 'react';
+import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+
+type MetricIcon = React.ComponentType<{ className?: string }>;
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   change?: number;
-  icon: LucideIcon;
+  icon: MetricIcon;
   trend?: 'up' | 'down' | 'neutral';
 }
 

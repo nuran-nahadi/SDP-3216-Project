@@ -35,7 +35,7 @@ class PendingUpdate(Base):
     raw_text = Column(Text, nullable=True)
     
     # Structured data extracted by AI (stored as JSONB for flexible querying)
-    # Example for expense: {"amount": 50, "currency": "USD", "merchant": "Subway"}
+    # Example for expense: {"amount": 50, "currency": "Taka", "merchant": "Subway"}
     # Example for task: {"status": "done", "project": "Website", "due_date": "2024-01-15"}
     structured_data = Column(JSONB, nullable=False, server_default='{}')
     

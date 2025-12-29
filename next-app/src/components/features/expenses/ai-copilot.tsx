@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Loader2, FileText, Image as ImageIcon, Mic } from 'lucide-react';
 import { ExpenseForm } from './expense-form';
 import { Expense } from '@/lib/types/expense';
+import { formatTaka } from '@/lib/utils/currency';
 
 type AIMode = 'text' | 'receipt' | 'voice';
 
@@ -193,7 +194,7 @@ export function AICopilot() {
   if (showForm && parsedData) {
     const expenseData: Partial<Expense> = {
       amount: parsedData.amount || 0,
-      currency: parsedData.currency || 'USD',
+      currency: 'Taka',
       category: parsedData.category as any,
       subcategory: parsedData.subcategory,
       merchant: parsedData.merchant,
@@ -330,7 +331,7 @@ export function AICopilot() {
                 <div>
                   <span className="text-muted-foreground">Amount:</span>{' '}
                   <span className="font-medium">
-                    {parsedData.currency || 'USD'} {parsedData.amount}
+                    {formatTaka(parsedData.amount)}
                   </span>
                 </div>
               )}

@@ -271,12 +271,10 @@ export default function JournalPage() {
         <EmptyState
           title="No journal entries yet"
           description="Start writing your first journal entry to track your thoughts and feelings"
-          action={
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create First Entry
-            </Button>
-          }
+          action={{
+            label: 'Create First Entry',
+            onClick: () => setShowCreateDialog(true),
+          }}
         />
       ) : (
         <div className="space-y-4">

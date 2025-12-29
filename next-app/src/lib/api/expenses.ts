@@ -92,6 +92,7 @@ export interface ParseTextResponse {
   amount: number;
   currency: string;
   category: string;
+  subcategory?: string | null;
   merchant: string | null;
   description: string | null;
   date: string;

@@ -38,7 +38,7 @@ CREATE TABLE user_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   default_task_priority task_priorities NOT NULL DEFAULT 'medium',
-  default_expense_currency TEXT NOT NULL DEFAULT 'USD',
+  default_expense_currency TEXT NOT NULL DEFAULT 'Taka',
   notification_settings JSONB,
   theme themes NOT NULL DEFAULT 'auto',
   language TEXT NOT NULL DEFAULT 'en',
@@ -498,5 +498,4 @@ CREATE TABLE IF NOT EXISTS pending_updates (
 CREATE INDEX IF NOT EXISTS idx_daily_update_sessions_user_active ON daily_update_sessions(user_id, is_active) WHERE is_active = TRUE;
 CREATE INDEX IF NOT EXISTS idx_pending_updates_user_status ON pending_updates(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_pending_updates_session ON pending_updates(session_id) WHERE session_id IS NOT NULL;
-
 

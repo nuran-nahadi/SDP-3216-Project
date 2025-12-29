@@ -32,6 +32,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import { formatTaka } from '@/lib/utils/currency';
 
 const COLORS = [
   'hsl(var(--chart-1))',
@@ -216,7 +217,7 @@ export function ExpenseCharts() {
                       </div>
                       <div className="text-right">
                         <div className="text-base font-bold">
-                          ${item.amount.toFixed(2)}
+                          {formatTaka(item.amount)}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {item.transaction_count}{' '}
@@ -249,7 +250,7 @@ export function ExpenseCharts() {
                       fontSize={12}
                     />
                     <YAxis 
-                      tickFormatter={(value) => `$${value}`} 
+                      tickFormatter={(value) => formatTaka(value)} 
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={12}
                     />
@@ -257,7 +258,7 @@ export function ExpenseCharts() {
                       labelFormatter={(date) =>
                         format(parseISO(date as string), 'MMMM d, yyyy')
                       }
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                      formatter={(value: number) => [formatTaka(value), 'Amount']}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--popover))',
                         border: '1px solid hsl(var(--border))',
@@ -280,10 +281,7 @@ export function ExpenseCharts() {
                   <div className="p-5 rounded-xl bg-gradient-to-br from-accent/50 to-accent/30 border border-primary/10 hover:shadow-sm transition-shadow">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Spent</div>
                     <div className="text-2xl font-bold mt-2 text-primary">
-                      $
-                      {trendData
-                        .reduce((sum, item) => sum + item.amount, 0)
-                        .toFixed(2)}
+                      {formatTaka(trendData.reduce((sum, item) => sum + item.amount, 0))}
                     </div>
                   </div>
                   <div className="p-5 rounded-xl bg-gradient-to-br from-accent/50 to-accent/30 border border-primary/10 hover:shadow-sm transition-shadow">
@@ -291,11 +289,10 @@ export function ExpenseCharts() {
                       Avg per Day
                     </div>
                     <div className="text-2xl font-bold mt-2 text-primary">
-                      $
-                      {(
+                      {formatTaka(
                         trendData.reduce((sum, item) => sum + item.amount, 0) /
-                        trendData.length
-                      ).toFixed(2)}
+                          trendData.length
+                      )}
                     </div>
                   </div>
                 </div>

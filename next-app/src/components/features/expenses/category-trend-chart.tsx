@@ -10,6 +10,7 @@ import {
   EXPENSE_UPDATED,
   EXPENSE_DELETED,
 } from '@/lib/utils/event-types';
+import { formatTaka } from '@/lib/utils/currency';
 import {
   AreaChart,
   Area,
@@ -109,7 +110,7 @@ export function CategoryTrendChart() {
             />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number) => `$${value.toFixed(2)}`}
+              formatter={(value: number) => formatTaka(value)}
               labelFormatter={(label) => {
                 const date = new Date(label + '-01');
                 return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

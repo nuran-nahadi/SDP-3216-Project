@@ -17,6 +17,7 @@ import { AIFloatingButton } from '@/components/shared/ai-floating-button';
 import { useExpenseActions } from '@/lib/hooks/use-expense-actions';
 import { parseText, parseReceipt, parseVoice } from '@/lib/api/expenses';
 import { Expense } from '@/lib/types/expense';
+import { formatTaka } from '@/lib/utils/currency';
 
 export default function ExpensesPage() {
   const [activeTab, setActiveTab] = useState<'recent' | 'summary'>('recent');
@@ -63,7 +64,7 @@ export default function ExpensesPage() {
 
       let content = 'I\'ve analyzed your expense! Here\'s what I found:\n\n';
       
-      if (parsed.amount) content += `💰 Amount: ${parsed.currency || 'USD'} ${parsed.amount}\n`;
+      if (parsed.amount) content += `💰 Amount: ${formatTaka(parsed.amount)}\n`;
       if (parsed.category) content += `📁 Category: ${parsed.category}\n`;
       if (parsed.merchant) content += `🏪 Merchant: ${parsed.merchant}\n`;
       if (parsed.date) content += `📅 Date: ${parsed.date}\n`;
@@ -75,7 +76,7 @@ export default function ExpensesPage() {
         content,
         data: {
           amount: parsed.amount || 0,
-          currency: parsed.currency || 'USD',
+          currency: 'Taka',
           category: parsed.category,
           subcategory: parsed.subcategory,
           merchant: parsed.merchant,
@@ -112,7 +113,7 @@ export default function ExpensesPage() {
 
       let content = 'I\'ve analyzed your voice input! Here\'s what I found:\n\n';
       
-      if (parsed.amount) content += `💰 Amount: ${parsed.currency || 'USD'} ${parsed.amount}\n`;
+      if (parsed.amount) content += `💰 Amount: ${formatTaka(parsed.amount)}\n`;
       if (parsed.category) content += `📁 Category: ${parsed.category}\n`;
       if (parsed.merchant) content += `🏪 Merchant: ${parsed.merchant}\n`;
       if (parsed.date) content += `📅 Date: ${parsed.date}\n`;
@@ -125,7 +126,7 @@ export default function ExpensesPage() {
         transcribedText: parsed.transcribed_text,
         data: {
           amount: parsed.amount || 0,
-          currency: parsed.currency || 'USD',
+          currency: 'Taka',
           category: parsed.category,
           subcategory: parsed.subcategory,
           merchant: parsed.merchant,
@@ -149,7 +150,7 @@ export default function ExpensesPage() {
 
       let content = 'I\'ve analyzed your receipt! Here\'s what I found:\n\n';
       
-      if (parsed.amount) content += `💰 Amount: ${parsed.currency || 'USD'} ${parsed.amount}\n`;
+      if (parsed.amount) content += `💰 Amount: ${formatTaka(parsed.amount)}\n`;
       if (parsed.category) content += `📁 Category: ${parsed.category}\n`;
       if (parsed.merchant) content += `🏪 Merchant: ${parsed.merchant}\n`;
       if (parsed.date) content += `📅 Date: ${parsed.date}\n`;
@@ -161,7 +162,7 @@ export default function ExpensesPage() {
         content,
         data: {
           amount: parsed.amount || 0,
-          currency: parsed.currency || 'USD',
+          currency: 'Taka',
           category: parsed.category,
           subcategory: parsed.subcategory,
           merchant: parsed.merchant,

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSpendTrend } from '@/lib/api/expenses';
 import { Skeleton } from '@/components/shared/skeleton';
+import { formatTaka } from '@/lib/utils/currency';
 import {
   LineChart,
   Line,
@@ -90,7 +91,7 @@ export function SpendTrendChart() {
             />
             <YAxis tick={{ fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+              formatter={(value: number) => [formatTaka(value), 'Amount']}
               labelFormatter={(label) => {
                 const date = new Date(label);
                 return date.toLocaleDateString('en-US', {

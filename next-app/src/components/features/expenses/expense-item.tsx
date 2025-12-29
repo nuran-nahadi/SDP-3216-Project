@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils/date';
+import { formatTaka } from '@/lib/utils/currency';
 
 interface ExpenseItemProps {
   expense: Expense;
@@ -45,7 +46,7 @@ export function ExpenseItem({ expense, onEdit, onDelete }: ExpenseItemProps) {
           
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-foreground">
-              {expense.currency} {expense.amount.toFixed(2)}
+              {formatTaka(expense.amount)}
             </span>
             {expense.merchant && (
               <span className="text-sm font-medium text-muted-foreground">

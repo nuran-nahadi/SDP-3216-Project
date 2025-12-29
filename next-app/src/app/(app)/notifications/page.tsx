@@ -16,6 +16,7 @@ import {
   sendTestEmail 
 } from '@/lib/api/notifications';
 import { NotificationSettings, DailySummary } from '@/lib/types/notification';
+import { formatTaka } from '@/lib/utils/currency';
 
 // Generate time options (every hour)
 const timeOptions = Array.from({ length: 24 }, (_, i) => {
@@ -310,8 +311,8 @@ export default function NotificationsPage() {
                   Expenses
                 </h4>
                 <div className="space-y-1 text-sm">
-                  <p>Today: <span className="font-medium">${preview.expenses_today.toFixed(2)}</span></p>
-                  <p>This week: <span className="font-medium">${preview.expenses_this_week.toFixed(2)}</span></p>
+                  <p>Today: <span className="font-medium">{formatTaka(preview.expenses_today)}</span></p>
+                  <p>This week: <span className="font-medium">{formatTaka(preview.expenses_this_week)}</span></p>
                   {preview.top_expense_category && (
                     <p className="text-muted-foreground">Top category: {preview.top_expense_category}</p>
                   )}

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getExpenses } from '@/lib/api/expenses';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
-import { DollarSign } from 'lucide-react';
+import { TakaIcon } from '@/components/shared/taka-icon';
+import { formatTaka } from '@/lib/utils/currency';
 import {
   format,
   subDays,
@@ -146,7 +147,7 @@ export function ExpenseHeatmap() {
         </CardHeader>
         <CardContent>
           <EmptyState
-            icon={DollarSign}
+            icon={TakaIcon}
             title="No expenses yet"
             description="Add expenses to see your spending heatmap."
           />
@@ -205,12 +206,12 @@ export function ExpenseHeatmap() {
       <CardHeader className="border-b bg-muted/30">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-amber-500" />
+            <TakaIcon className="h-5 w-5 text-amber-500" />
             Expense Activity
           </CardTitle>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
-          Last 3 months • {maxAmount > 0 ? `Peak: $${maxAmount.toFixed(2)}/day` : 'No expenses recorded'}
+          Last 3 months • {maxAmount > 0 ? `Peak: ${formatTaka(maxAmount)}/day` : 'No expenses recorded'}
         </p>
       </CardHeader>
       <CardContent className="pt-6">
@@ -257,7 +258,7 @@ export function ExpenseHeatmap() {
                       }}
                       onMouseEnter={() => day && setHoveredDay(day)}
                       onMouseLeave={() => setHoveredDay(null)}
-                      title={day ? `${format(day.date, 'MMM d, yyyy')}: $${day.amount.toFixed(2)}` : ''}
+                      title={day ? `${format(day.date, 'MMM d, yyyy')}: ${formatTaka(day.amount)}` : ''}
                     />
                   ))}
                 </div>
@@ -272,7 +273,7 @@ export function ExpenseHeatmap() {
                 {format(hoveredDay.date, 'MMMM d, yyyy')}
               </div>
               <div className="text-muted-foreground mt-1">
-                ${hoveredDay.amount.toFixed(2)} spent
+                {formatTaka(hoveredDay.amount)} spent
               </div>
             </div>
           )}

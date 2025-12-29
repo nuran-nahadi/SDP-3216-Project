@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   CheckSquare,
-  DollarSign,
   Calendar,
   BookOpen,
   Save,
@@ -23,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { PendingUpdate, UpdateCategory, PendingUpdateEdit } from '@/lib/types/daily-update';
 import { cn } from '@/lib/utils/cn';
+import { TakaIcon } from '@/components/shared/taka-icon';
 
 interface PendingReviewModalProps {
   update: PendingUpdate | null;
@@ -52,7 +52,7 @@ const categoryConfig: Record<UpdateCategory, {
     ],
   },
   expense: {
-    icon: DollarSign,
+    icon: TakaIcon,
     label: 'Expense',
     color: 'text-green-600',
     fields: [

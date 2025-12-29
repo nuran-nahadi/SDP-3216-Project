@@ -106,8 +106,8 @@ class EmailService:
         <!-- Expenses Section -->
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f59e0b;">
             <h3 style="margin: 0 0 15px 0; color: #f59e0b; font-weight: 600;">Expenses</h3>
-            <p style="margin: 5px 0;"><strong>Today:</strong> ${summary.expenses_today:.2f}</p>
-            <p style="margin: 5px 0;"><strong>This week:</strong> ${summary.expenses_this_week:.2f}</p>
+            <p style="margin: 5px 0;"><strong>Today:</strong> ৳{summary.expenses_today:.2f}</p>
+            <p style="margin: 5px 0;"><strong>This week:</strong> ৳{summary.expenses_this_week:.2f}</p>
             {f'<p style="margin: 5px 0; color: #666;">Top category: {summary.top_expense_category}</p>' if summary.top_expense_category else ''}
         </div>
         
@@ -171,8 +171,8 @@ TASKS
 TODAY'S EVENTS ({summary.events_today})
 {events_text}
 EXPENSES
-  • Today: ${summary.expenses_today:.2f}
-  • This week: ${summary.expenses_this_week:.2f}
+  • Today: ৳{summary.expenses_today:.2f}
+  • This week: ৳{summary.expenses_this_week:.2f}
   {f'• Top category: {summary.top_expense_category}' if summary.top_expense_category else ''}
 
 JOURNAL

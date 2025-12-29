@@ -82,7 +82,7 @@ class UserProfileUpdate(BaseModel):
 # User Preferences Models
 class UserPreferencesBase(BaseModel):
     default_task_priority: TaskPriority = TaskPriority.medium
-    default_expense_currency: str = "USD"
+    default_expense_currency: str = "Taka"
     notification_settings: Optional[dict] = None
     theme: Theme = Theme.auto
     language: str = "en"

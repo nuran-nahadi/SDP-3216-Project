@@ -66,8 +66,8 @@ If the input is NOT expense-related (like greetings, random chat, questions, etc
 If the input IS expense-related, return a valid JSON object with this structure:
 {{
     "is_expense_related": true,
-    "amount": float (required),
-    "currency": "Taka" (default, or extract if mentioned),
+    "amount": float (required, always in Taka),
+    "currency": "Taka" (always),
     "category": one of {categories} (required),
     "subcategory": string (optional),
     "merchant": string (optional),
@@ -84,7 +84,8 @@ Rules for expense-related inputs:
 3. Use "other" category only if no other fits
 4. Extract merchant name from receipts or context
 5. For dates, if only time is mentioned, use today's date
-6. For Bangladeshi context: assume Taka currency unless specified otherwise
+6. Output amounts in Bangladeshi Taka (BDT) only
+7. If the user mentions USD/$/dollars, convert using 1 USD = 120 Taka and include the original amount+currency in the description (e.g., "Original: USD 10.00")
 7. Common payment methods in Bangladesh: bkash, nagad, rocket should map to "digital_wallet"
 
 Examples of expense-related inputs:
@@ -93,6 +94,7 @@ Examples of expense-related inputs:
 - "Paid electricity bill 800 taka"
 - "Coffee 50 taka"
 - "Transportation 200"
+- "I spent $10 on coffee" -> amount should be 1200, currency "Taka", and description should include "Original: USD 10.00"
 
 Examples of NON expense-related inputs:
 - "hi there"
@@ -128,6 +130,9 @@ Current date and time: {datetime.now().isoformat()}
         if result["amount"] <= 0:
             logger.error("Invalid amount in AI expense response: %s", result)
             raise HTTPException(status_code=400, detail="Failed to parse expense from text")
+
+        # Systemwide currency: always store/display Taka (BDT)
+        result["currency"] = "Taka"
 
         if "confidence" not in result:
             result["confidence"] = 0.8

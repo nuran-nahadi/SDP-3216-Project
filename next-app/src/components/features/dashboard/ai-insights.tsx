@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { getInsights, SpendingInsights } from '@/lib/api/expenses';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { EmptyState } from '@/components/shared/empty-state';
+import { formatTaka } from '@/lib/utils/currency';
 import {
   Sparkles,
   TrendingUp,
@@ -143,7 +144,7 @@ export function AIInsights() {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-muted-foreground">Total Spending</span>
             <span className="text-2xl font-bold text-primary">
-              ${insights.total_spending.toFixed(2)}
+              {formatTaka(insights.total_spending)}
             </span>
           </div>
           <div className="h-px bg-border" />
@@ -154,7 +155,7 @@ export function AIInsights() {
                 {insights.top_category}
               </div>
               <div className="text-xs text-muted-foreground">
-                ${insights.top_category_amount.toFixed(2)}
+                {formatTaka(insights.top_category_amount)}
               </div>
             </div>
           </div>

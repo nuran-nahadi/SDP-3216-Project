@@ -6,6 +6,7 @@ import { getTopTransactions, TopTransaction } from '@/lib/api/expenses';
 import { Skeleton } from '@/components/shared/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils/date';
+import { formatTaka } from '@/lib/utils/currency';
 
 const categoryColors: Record<string, string> = {
   food: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
@@ -94,7 +95,7 @@ export function TopTransactionsList({ onViewDetails }: TopTransactionsListProps)
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold">
-                  ${transaction.amount.toFixed(2)}
+                  {formatTaka(transaction.amount)}
                 </div>
               </div>
             </div>

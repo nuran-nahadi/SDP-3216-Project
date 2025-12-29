@@ -87,7 +87,7 @@ export const taskSchema = z.object({
  */
 export const expenseSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
-  currency: z.string().length(3, 'Currency must be 3 characters').default('USD'),
+  currency: z.string().default('Taka'),
   category: z.nativeEnum(ExpenseCategory),
   subcategory: z.string().max(100).optional(),
   merchant: z.string().max(200).optional(),

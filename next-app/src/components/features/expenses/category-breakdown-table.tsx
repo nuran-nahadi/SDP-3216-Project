@@ -14,6 +14,7 @@ import { getCategoryBreakdown } from '@/lib/api/expenses';
 import { Skeleton } from '@/components/shared/skeleton';
 import { ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatTaka } from '@/lib/utils/currency';
 
 interface CategoryData {
   category: string;
@@ -146,7 +147,7 @@ export function CategoryBreakdownTable() {
                   {item.category}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${item.amount.toFixed(2)}
+                  {formatTaka(item.amount)}
                 </TableCell>
                 <TableCell className="text-right">
                   {item.percentage.toFixed(1)}%

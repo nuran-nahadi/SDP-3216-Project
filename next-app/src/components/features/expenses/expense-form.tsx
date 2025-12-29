@@ -60,7 +60,7 @@ export function ExpenseForm({ expense, initialData, onSuccess, onCancel }: Expen
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       amount: initialData?.amount || expense?.amount || 0,
-      currency: initialData?.currency || expense?.currency || 'USD',
+      currency: initialData?.currency || expense?.currency || 'Taka',
       category: initialData?.category || expense?.category || ExpenseCategory.OTHER,
       subcategory: initialData?.subcategory || expense?.subcategory || '',
       merchant: initialData?.merchant || expense?.merchant || '',
@@ -152,7 +152,7 @@ export function ExpenseForm({ expense, initialData, onSuccess, onCancel }: Expen
               <FormItem>
                 <FormLabel>Currency *</FormLabel>
                 <FormControl>
-                  <Input placeholder="USD" {...field} />
+                  <Input placeholder="Taka" {...field} disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
