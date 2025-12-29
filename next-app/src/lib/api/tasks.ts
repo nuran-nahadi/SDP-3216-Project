@@ -63,6 +63,19 @@ export async function getTodayTasks(): Promise<ApiResponse<Task[]>> {
   return response.data;
 }
 
+export interface TodayTaskStats {
+  completed_today: number;
+}
+
+/**
+ * Get today's task stats (e.g., completed today count)
+ * @returns Today's task statistics
+ */
+export async function getTodayTaskStats(): Promise<ApiResponse<TodayTaskStats>> {
+  const response = await apiClient.get<ApiResponse<TodayTaskStats>>('/tasks/stats/today');
+  return response.data;
+}
+
 /**
  * Get overdue tasks (past due date and not completed)
  * @returns List of overdue tasks

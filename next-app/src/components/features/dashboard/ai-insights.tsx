@@ -174,17 +174,31 @@ export function AIInsights() {
         {/* Insights */}
         {insights.insights && insights.insights.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Key Insights
-            </h4>
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Key Insights
+              </h4>
+              <Badge
+                variant="secondary"
+                className="border border-primary/20 bg-primary/10 text-primary"
+              >
+                AI generated
+              </Badge>
+            </div>
             <div className="space-y-2">
               {insights.insights.map((insight, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-lg border bg-card/50 text-sm leading-relaxed hover:shadow-sm transition-shadow"
+                  className="group relative overflow-hidden rounded-xl border bg-gradient-to-br from-card to-primary/5 p-4 text-sm leading-relaxed shadow-sm transition hover:shadow-md"
                 >
-                  {insight}
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl transition-opacity group-hover:opacity-80" />
+                  <div className="relative flex items-start gap-3">
+                    <div className="mt-0.5 rounded-md border border-primary/15 bg-primary/10 p-1.5 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div className="whitespace-pre-line">{insight}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -194,17 +208,31 @@ export function AIInsights() {
         {/* Recommendations */}
         {insights.recommendations && insights.recommendations.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-bold flex items-center gap-2 text-foreground">
-              <Lightbulb className="h-4 w-4 text-amber-500" />
-              Recommendations
-            </h4>
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                Recommendations
+              </h4>
+              <Badge
+                variant="secondary"
+                className="border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              >
+                AI suggested
+              </Badge>
+            </div>
             <div className="space-y-2">
               {insights.recommendations.map((recommendation, index) => (
                 <div
                   key={index}
-                  className="p-4 rounded-lg bg-primary/10 border border-primary/30 text-sm leading-relaxed hover:shadow-sm transition-all hover:bg-primary/15"
+                  className="group relative overflow-hidden rounded-xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-card p-4 text-sm leading-relaxed shadow-sm transition hover:shadow-md"
                 >
-                  {recommendation}
+                  <div className="pointer-events-none absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-amber-500/15 blur-2xl transition-opacity group-hover:opacity-80" />
+                  <div className="relative flex items-start gap-3">
+                    <div className="mt-0.5 rounded-md border border-amber-500/20 bg-amber-500/10 p-1.5 text-amber-700 dark:text-amber-300">
+                      <Lightbulb className="h-4 w-4" />
+                    </div>
+                    <div className="whitespace-pre-line">{recommendation}</div>
+                  </div>
                 </div>
               ))}
             </div>

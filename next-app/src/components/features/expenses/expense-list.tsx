@@ -27,6 +27,17 @@ export function ExpenseList({ onEdit, onDelete }: ExpenseListProps) {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
+  const isFirstPage = page === 1;
+
+  const isToday = (value: string | Date) => {
+    const date = new Date(value);
+    const now = new Date();
+    return (
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
+    );
+  };
 
   const fetchExpenses = useCallback(async (isInitial = false) => {
     try {
@@ -88,21 +99,86 @@ export function ExpenseList({ onEdit, onDelete }: ExpenseListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        {expenses.map((expense, index) => (
-          <div 
-            key={expense.id}
-            className="fade-in"
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
-            <ExpenseItem
-              expense={expense}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        ))}
-      </div>
+      {isFirstPage ? (
+        (() => {
+          const todays = expenses.filter((expense) => isToday(expense.date));
+          const earlier = expenses.filter((expense) => !isToday(expense.date));
+
+          return (
+            <div className="space-y-6">
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Today
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {todays.length}
+                  </span>
+                </div>
+
+                {todays.length === 0 ? (
+                  <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+                    No expenses added today.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {todays.map((expense, index) => (
+                      <div
+                        key={expense.id}
+                        className="fade-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <ExpenseItem expense={expense} onEdit={onEdit} onDelete={onDelete} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Earlier
+                  </h2>
+                  <span className="text-xs text-muted-foreground">
+                    {earlier.length}
+                  </span>
+                </div>
+
+                {earlier.length === 0 ? (
+                  <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+                    No earlier expenses.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {earlier.map((expense, index) => (
+                      <div
+                        key={expense.id}
+                        className="fade-in"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        <ExpenseItem expense={expense} onEdit={onEdit} onDelete={onDelete} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          );
+        })()
+      ) : (
+        <div className="space-y-3">
+          {expenses.map((expense, index) => (
+            <div
+              key={expense.id}
+              className="fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <ExpenseItem expense={expense} onEdit={onEdit} onDelete={onDelete} />
+            </div>
+          ))}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-4">

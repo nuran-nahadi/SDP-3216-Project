@@ -369,6 +369,21 @@ class TaskService:
             "created_at": task.created_at,
             "updated_at": task.updated_at
         } for task in tasks]
+
+    @staticmethod
+    def get_tasks_completed_today_count(db: Session, user: User) -> int:
+        """Return the number of tasks completed today."""
+        today = datetime.now().date()
+        return (
+            db.query(Task)
+            .filter(
+                Task.user_id == user.id,
+                Task.is_completed.is_(True),
+                Task.completion_date.isnot(None),
+                func.date(Task.completion_date) == today,
+            )
+            .count()
+        )
     
     @staticmethod
     def get_overdue_tasks(db: Session, user: User) -> List[dict]:

@@ -93,6 +93,26 @@ def get_today_tasks(
         "meta": {"count": len(tasks)}
     }
 
+@router.get(
+    "/stats/today",
+    status_code=status.HTTP_200_OK,
+    response_model=TaskStatsResponse,
+    summary="Get today's task stats",
+    description="Get basic task statistics for today (e.g., completed count)"
+)
+def get_today_task_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+):
+    """Get today's task stats."""
+    completed_today = TaskService.get_tasks_completed_today_count(db, current_user)
+    return {
+        "success": True,
+        "data": {"completed_today": completed_today},
+        "message": "Today's task statistics retrieved successfully",
+        "meta": {},
+    }
+
 
 @router.get(
     "/overdue",

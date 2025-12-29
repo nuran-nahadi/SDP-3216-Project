@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getTodayTasks } from '../api/tasks';
+import { getTodayTaskStats } from '../api/tasks';
 import { getUpcomingEvents } from '../api/events';
 import { getTotalSpend } from '../api/expenses';
 import { useEventBus } from './use-event-bus';
@@ -51,20 +51,15 @@ export function useDashboardMetrics(): UseDashboardMetricsReturn {
       setError(null);
 
       // Fetch all metrics in parallel
-      const [todayTasksResponse, upcomingEventsResponse, totalSpendResponse] =
+      const [todayStatsResponse, upcomingEventsResponse, totalSpendResponse] =
         await Promise.all([
-          getTodayTasks(),
+          getTodayTaskStats(),
           getUpcomingEvents({ days: 7 }),
           getTotalSpend(),
         ]);
 
-      // Calculate task completion count (completed tasks today)
-      const completedTasks = todayTasksResponse.data.filter(
-        (task) => task.is_completed
-      );
-
       setMetrics({
-        taskCompletionCount: completedTasks.length,
+        taskCompletionCount: todayStatsResponse.data.completed_today,
         upcomingEventsCount: upcomingEventsResponse.data.length,
         totalExpense: totalSpendResponse.data.current_month,
         expenseChange: totalSpendResponse.data.percentage_change,

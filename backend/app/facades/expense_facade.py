@@ -732,9 +732,14 @@ class ExpenseFacade:
 
     def get_category_trend_dashboard(self, months: int = 6) -> dict:
         now = datetime.now()
-        end_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        start_year = now.year
-        start_month = now.month - months
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if current_month_start.month == 12:
+            end_date = current_month_start.replace(year=current_month_start.year + 1, month=1)
+        else:
+            end_date = current_month_start.replace(month=current_month_start.month + 1)
+
+        start_year = current_month_start.year
+        start_month = current_month_start.month - (months - 1)
         while start_month <= 0:
             start_month += 12
             start_year -= 1

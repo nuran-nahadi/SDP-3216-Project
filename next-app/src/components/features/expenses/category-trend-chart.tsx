@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCategoryTrend } from '@/lib/api/expenses';
 import { Skeleton } from '@/components/shared/skeleton';
+import { useEventBus } from '@/lib/hooks/use-event-bus';
+import {
+  EXPENSE_CREATED,
+  EXPENSE_UPDATED,
+  EXPENSE_DELETED,
+} from '@/lib/utils/event-types';
 import {
   AreaChart,
   Area,
@@ -37,36 +43,38 @@ export function CategoryTrendChart() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await getCategoryTrend();
-        
-        // Transform the data from array of items to grouped by month
-        const groupedByMonth: Record<string, CategoryTrendData> = {};
-        const uniqueCategories = new Set<string>();
-        
-        response.data.forEach((item) => {
-          if (!groupedByMonth[item.month]) {
-            groupedByMonth[item.month] = { month: item.month };
-          }
-          groupedByMonth[item.month][item.category] = item.amount;
-          uniqueCategories.add(item.category);
-        });
-        
-        const transformedData = Object.values(groupedByMonth);
-        setData(transformedData);
-        setCategories(Array.from(uniqueCategories));
-      } catch (error) {
-        console.error('Error fetching category trend:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getCategoryTrend();
 
-    fetchData();
+      // Transform the data from array of items to grouped by month
+      const groupedByMonth: Record<string, CategoryTrendData> = {};
+      const uniqueCategories = new Set<string>();
+
+      response.data.forEach((item) => {
+        if (!groupedByMonth[item.month]) {
+          groupedByMonth[item.month] = { month: item.month };
+        }
+        groupedByMonth[item.month][item.category] = item.amount;
+        uniqueCategories.add(item.category);
+      });
+
+      const transformedData = Object.values(groupedByMonth);
+      setData(transformedData);
+      setCategories(Array.from(uniqueCategories));
+    } catch (error) {
+      console.error('Error fetching category trend:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEventBus([EXPENSE_CREATED, EXPENSE_UPDATED, EXPENSE_DELETED], fetchData);
 
   if (loading) {
     return (
