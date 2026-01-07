@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { startOfWeek, endOfWeek, parseISO, format } from 'date-fns';
 import { JournalEntry, JournalMood } from '@/lib/types/journal';
 import { getJournalEntries, deleteJournalEntry, getJournalStats, parseJournalText, parseVoice } from '@/lib/api/journal';
 import { JournalForm, JournalEntryCard } from '@/components/features/journal';
@@ -182,6 +183,31 @@ export default function JournalPage() {
     setShowAIChat(false);
   };
 
+  const groupedEntries = useMemo(() => {
+    const groups: { key: string; label: string; entries: JournalEntry[] }[] = [];
+    const indexMap = new Map<string, number>();
+
+    entries.forEach((entry) => {
+      const entryDate = parseISO(entry.created_at);
+      const weekStart = startOfWeek(entryDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(entryDate, { weekStartsOn: 1 });
+      const key = format(weekStart, 'yyyy-MM-dd');
+      const label = `Week of ${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`;
+
+      if (!indexMap.has(key)) {
+        indexMap.set(key, groups.length);
+        groups.push({ key, label, entries: [] });
+      }
+
+      const groupIndex = indexMap.get(key);
+      if (groupIndex !== undefined) {
+        groups[groupIndex].entries.push(entry);
+      }
+    });
+
+    return groups;
+  }, [entries]);
+
   return (
     <div className="flex h-full">
       <div className={cn(
@@ -277,14 +303,25 @@ export default function JournalPage() {
           }}
         />
       ) : (
-        <div className="space-y-4">
-          {entries.map((entry) => (
-            <JournalEntryCard
-              key={entry.id}
-              entry={entry}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-            />
+        <div className="space-y-6">
+          {groupedEntries.map((group) => (
+            <div key={group.key} className="space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span>{group.label}</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <div className="space-y-4">
+                {group.entries.map((entry) => (
+                  <JournalEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
