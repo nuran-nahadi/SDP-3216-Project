@@ -2,21 +2,29 @@ from fastapi import APIRouter, Depends, Query, Path, status, HTTPException, File
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.core.dependencies import get_current_user
-from app.services.tasks import TaskService
+from app.facades.task_facade import TaskFacade
+from app.repositories.task_repository import TaskRepository
 from app.schemas.tasks import (
     TaskCreate, TaskUpdate, TaskParseRequest, TaskCompleteRequest,
     TaskResponse, TasksResponse, MessageResponse, TaskParseResponse,
     TaskPriority, TaskStatus, AITaskParseRequest, AITaskParseResponse, TaskStatsResponse
 )
-from app.models.models import User, Task
+from app.models.models import User
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
-from app.services.ai_service import ai_service
 from app.services.ai_rate_limit import ai_rate_limit
 
 
 router = APIRouter(tags=["Tasks"], prefix="/tasks")
+
+
+def get_task_facade(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user())
+) -> TaskFacade:
+    """Instantiate a task facade per request."""
+    return TaskFacade(TaskRepository(db), current_user)
 
 
 @router.get(
@@ -36,20 +44,20 @@ def get_tasks(
     search: Optional[str] = Query(None, description="Search in title and description"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(50, ge=1, le=100, description="Items per page"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """List tasks with filters"""
-    result = TaskService.get_tasks(
-        db, current_user, status_filter, priority, due_date, tags, search, page, limit,
-        start_date=start_date, end_date=end_date
+    return facade.get_tasks(
+        status_filter=status_filter,
+        priority=priority,
+        due_date=due_date,
+        start_date=start_date,
+        end_date=end_date,
+        tags=tags,
+        search=search,
+        page=page,
+        limit=limit,
     )
-    return {
-        "success": True,
-        "data": result["data"],
-        "message": "Tasks retrieved successfully",
-        "meta": result["meta"]
-    }
 
 
 @router.post(
@@ -61,16 +69,10 @@ def get_tasks(
 )
 def create_task(
     task_data: TaskCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Create a new task"""
-    task = TaskService.create_task(db, current_user, task_data)
-    return {
-        "success": True,
-        "data": task,
-        "message": "Task created successfully"
-    }
+    return facade.create_task(task_data)
 
 
 @router.get(
@@ -81,17 +83,10 @@ def create_task(
     description="Get tasks due today"
 )
 def get_today_tasks(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Get today's tasks"""
-    tasks = TaskService.get_today_tasks(db, current_user)
-    return {
-        "success": True,
-        "data": tasks,
-        "message": "Today's tasks retrieved successfully",
-        "meta": {"count": len(tasks)}
-    }
+    return facade.get_today_tasks()
 
 @router.get(
     "/stats/today",
@@ -101,17 +96,10 @@ def get_today_tasks(
     description="Get basic task statistics for today (e.g., completed count)"
 )
 def get_today_task_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Get today's task stats."""
-    completed_today = TaskService.get_tasks_completed_today_count(db, current_user)
-    return {
-        "success": True,
-        "data": {"completed_today": completed_today},
-        "message": "Today's task statistics retrieved successfully",
-        "meta": {},
-    }
+    return facade.get_today_task_stats()
 
 
 @router.get(
@@ -122,17 +110,10 @@ def get_today_task_stats(
     description="Get overdue tasks"
 )
 def get_overdue_tasks(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Get overdue tasks"""
-    tasks = TaskService.get_overdue_tasks(db, current_user)
-    return {
-        "success": True,
-        "data": tasks,
-        "message": "Overdue tasks retrieved successfully",
-        "meta": {"count": len(tasks)}
-    }
+    return facade.get_overdue_tasks()
 
 
 @router.get(
@@ -144,16 +125,10 @@ def get_overdue_tasks(
 )
 def get_task(
     task_id: UUID = Path(..., description="Task ID"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Get a specific task"""
-    task = TaskService.get_task_by_id(db, current_user, task_id)
-    return {
-        "success": True,
-        "data": task,
-        "message": "Task retrieved successfully"
-    }
+    return facade.get_task(task_id)
 
 
 @router.put(
@@ -166,16 +141,10 @@ def get_task(
 def update_task(
     task_data: TaskUpdate,
     task_id: UUID = Path(..., description="Task ID"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Update an existing task"""
-    task = TaskService.update_task(db, current_user, task_id, task_data)
-    return {
-        "success": True,
-        "data": task,
-        "message": "Task updated successfully"
-    }
+    return facade.update_task(task_id, task_data)
 
 
 @router.delete(
@@ -187,15 +156,10 @@ def update_task(
 )
 def delete_task(
     task_id: UUID = Path(..., description="Task ID"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Delete a task"""
-    TaskService.delete_task(db, current_user, task_id)
-    return {
-        "success": True,
-        "message": "Task deleted successfully"
-    }
+    return facade.delete_task(task_id)
 
 
 @router.patch(
@@ -208,16 +172,10 @@ def delete_task(
 def complete_task(
     complete_data: TaskCompleteRequest,
     task_id: UUID = Path(..., description="Task ID"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Mark a task as completed"""
-    task = TaskService.complete_task(db, current_user, task_id, complete_data.actual_duration)
-    return {
-        "success": True,
-        "data": task,
-        "message": "Task marked as completed"
-    }
+    return facade.complete_task(task_id, complete_data.actual_duration)
 
 
 @router.post(
@@ -229,11 +187,10 @@ def complete_task(
 )
 def parse_task_text(
     parse_data: TaskParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Parse natural language text into task data"""
-    parsed_data = TaskService.parse_natural_language(parse_data.text)
+    parsed_data = facade.parse_natural_language(parse_data.text)
     return {
         "success": True,
         "data": parsed_data,
@@ -250,11 +207,10 @@ def parse_task_text(
 )
 async def parse_text_with_ai(
     request: AITaskParseRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Parse task from natural language text using AI"""
-    return await TaskService.parse_text_with_ai(db, current_user, request.text)
+    return await facade.parse_text_with_ai(request.text)
 
 @router.post(
     "/ai/parse-voice",
@@ -265,8 +221,7 @@ async def parse_text_with_ai(
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Parse task from voice using AI"""
     allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/webm']
@@ -275,7 +230,7 @@ async def parse_voice_with_ai(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be an audio file (MP3, WAV, M4A, WebM)"
         )
-    return await TaskService.parse_voice_with_ai(db, current_user, file)
+    return await facade.parse_voice_with_ai(file)
 
 
 @router.get(
@@ -287,159 +242,7 @@ async def parse_voice_with_ai(
 )
 @ai_rate_limit(feature="tasks:insights", key_param="current_user")
 async def get_task_ai_insights(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user())
+    facade: TaskFacade = Depends(get_task_facade),
 ):
     """Generate AI-powered insights and recommendations for the user's tasks"""
-    # Fetch all tasks for the user
-    tasks = db.query(Task).filter(Task.user_id == current_user.id).all()
-    if not tasks:
-        return {
-            "success": True,
-            "data": {},
-            "message": "No tasks found for insights.",
-            "meta": {}
-        }
-
-    # Prepare stats for the prompt
-    from collections import defaultdict
-    from datetime import datetime, timedelta
-    import json
-
-    now = datetime.now()
-    week_start = now - timedelta(days=now.weekday())
-    week_end = week_start + timedelta(days=6)
-    today = now.date()
-
-    stats = {
-        "total_tasks": len(tasks),
-        "completed_tasks": 0,
-        "failed_tasks": 0,
-        "pending_tasks": 0,
-        "in_progress_tasks": 0,
-        "cancelled_tasks": 0,
-        "completed_today": 0,
-        "failed_today": 0,
-        "completed_this_week": 0,
-        "failed_this_week": 0,
-        "high_priority_missed_this_week": [],
-        "recurring_missed": [],
-        "recurring_completed": [],
-        "recurring_total": 0,
-        "tasks_per_day": defaultdict(int),
-        "completed_per_day": defaultdict(int),
-        "failed_per_day": defaultdict(int),
-    }
-
-    for task in tasks:
-        due = task.due_date.date() if task.due_date else None
-        completed = task.completion_date.date() if task.completion_date else None
-        is_recurring = bool(task.recurrence_rule) if hasattr(task, 'recurrence_rule') else False
-        # Status counts
-        if task.status == "completed":
-            stats["completed_tasks"] += 1
-            if completed == today:
-                stats["completed_today"] += 1
-            if completed and week_start.date() <= completed <= week_end.date():
-                stats["completed_this_week"] += 1
-            if due:
-                stats["completed_per_day"][str(due)] += 1
-            if is_recurring:
-                stats["recurring_completed"].append(task.title)
-        elif task.status == "cancelled":
-            stats["cancelled_tasks"] += 1
-        elif task.status == "in_progress":
-            stats["in_progress_tasks"] += 1
-        else:
-            stats["pending_tasks"] += 1
-            if due == today and (not task.is_completed):
-                stats["failed_today"] += 1
-            if due and week_start.date() <= due <= week_end.date() and (not task.is_completed):
-                stats["failed_this_week"] += 1
-            if due:
-                stats["failed_per_day"][str(due)] += 1
-        # Per day
-        if due:
-            stats["tasks_per_day"][str(due)] += 1
-        # Missed high priority this week
-        if (
-            task.priority == "high"
-            and due and week_start.date() <= due <= week_end.date()
-            and not task.is_completed
-        ):
-            stats["high_priority_missed_this_week"].append(task.title)
-        # Recurring missed
-        if is_recurring:
-            stats["recurring_total"] += 1
-            if not task.is_completed and due and due < now.date():
-                stats["recurring_missed"].append(task.title)
-
-    # Convert defaultdicts to dicts
-    stats["tasks_per_day"] = dict(stats["tasks_per_day"])
-    stats["completed_per_day"] = dict(stats["completed_per_day"])
-    stats["failed_per_day"] = dict(stats["failed_per_day"])
-
-
-    prompt = f'''
-You are an expert productivity and task management assistant. Analyze the following user's task data and provide actionable insights and recommendations in JSON format.
-
-User's task statistics:
-{json.dumps(stats, indent=2)}
-
-Definitions:
-- "failed" means a task was due but not completed by its due date.
-- "recurring_missed" are recurring tasks that were not completed on time.
-- "high_priority_missed_this_week" are high priority tasks due this week but not completed.
-
-Please provide insights in this JSON format:
-{{
-  "summary": "A brief summary of the user's task performance.",
-  "insights": [
-    "Insight 1",
-    "Insight 2",
-    "..."
-  ],
-  "recommendations": [
-    "Recommendation 1",
-    "Recommendation 2",
-    "..."
-  ],
-  "missed_high_priority_tasks": [
-    "Task title 1",
-    "Task title 2"
-  ],
-  "missed_recurring_tasks": [
-    "Task title 1",
-    "Task title 2"
-  ],
-}}
-
-Focus on:
-- Patterns in completion and failure rates per day and week
-- Missed high priority and recurring tasks
-- Suggestions for improving productivity and task completion
-- Any anomalies or trends (e.g., always missing tasks on certain days)
-- Encourage positive habits and address recurring failures
-
-Return only a valid JSON object as specified above.
-'''
-
-    # Call Gemini for insights
-    ai_response = await ai_service.model.generate_content_async(prompt)
-    # Extract JSON from response
-    from app.services.ai_service import GeminiAIService
-    result = GeminiAIService._extract_json_from_response(GeminiAIService, ai_response.text, task=False)
-    if not result:
-        print("Gemini AI raw response:", ai_response.text)
-        return {
-            "success": False,
-            "data": {},
-            "message": "Failed to generate AI insights.",
-            "meta": {}
-        }
-    return {
-        "success": True,
-        "data": result,
-        "message": "AI task insights generated successfully.",
-        "meta": {}
-    }
+    return await facade.get_ai_insights()

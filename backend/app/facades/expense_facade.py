@@ -126,7 +126,7 @@ class ExpenseFacade:
                 "data": ExpenseOut.model_validate(expense),
                 "message": "Expense created successfully",
             }
-        except Exception as exc:  # pragma: no cover - defensive rollback
+        except Exception as exc:  
             self._repository.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,10 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
+import { format, parseISO } from 'date-fns';
 import { Task } from '@/lib/types/task';
 import { TaskItem } from './task-item';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/shared/skeleton';
 import { CheckCircle2 } from 'lucide-react';
+import { getFriendlyDateLabel } from '@/lib/utils/date';
 
 interface TaskListProps {
   tasks: Task[];
@@ -23,6 +26,29 @@ export function TaskList({
   onEdit,
   onDelete,
 }: TaskListProps) {
+  const groupedTasks = useMemo(() => {
+    const groups: { key: string; label: string; tasks: Task[] }[] = [];
+    const indexMap = new Map<string, number>();
+
+    tasks.forEach((task) => {
+      const hasDueDate = Boolean(task.due_date);
+      const key = hasDueDate ? format(parseISO(task.due_date as string), 'yyyy-MM-dd') : 'no-date';
+      const label = hasDueDate ? getFriendlyDateLabel(task.due_date as string) : 'No due date';
+
+      if (!indexMap.has(key)) {
+        indexMap.set(key, groups.length);
+        groups.push({ key, label, tasks: [] });
+      }
+
+      const groupIndex = indexMap.get(key);
+      if (groupIndex !== undefined) {
+        groups[groupIndex].tasks.push(task);
+      }
+    });
+
+    return groups;
+  }, [tasks]);
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -69,19 +95,30 @@ export function TaskList({
   }
 
   return (
-    <div className="space-y-3">
-      {tasks.map((task, index) => (
-        <div 
-          key={task.id} 
-          className="fade-in"
-          style={{ animationDelay: `${index * 0.05}s` }}
-        >
-          <TaskItem
-            task={task}
-            onComplete={onComplete}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+    <div className="space-y-6">
+      {groupedTasks.map((group) => (
+        <div key={group.key} className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              {group.label}
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {group.tasks.map((task, index) => (
+            <div
+              key={task.id}
+              className="fade-in"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <TaskItem
+                task={task}
+                onComplete={onComplete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
+          ))}
         </div>
       ))}
     </div>
