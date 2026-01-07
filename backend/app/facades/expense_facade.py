@@ -566,8 +566,9 @@ class ExpenseFacade:
         from app.services.ai_service import ai_service
 
         try:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=days)
+            # Always analyze the current calendar month so the dashboard reflects monthly spend
+            end_date = datetime.now().replace(hour=23, minute=59, second=59, microsecond=999_999)
+            start_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             expenses = self._repository.expenses_for_ai(
                 self._user.id,
                 start_date=start_date,
