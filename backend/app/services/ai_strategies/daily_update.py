@@ -21,6 +21,12 @@ logger = logging.getLogger(__name__)
 # System instruction for the AI "Interviewer" persona
 DAILY_UPDATE_SYSTEM_INSTRUCTION = """You are the Daily Update Assistant for a personal life management app. Your goal is to extract structured data for 4 categories: **Tasks, Expenses, Calendar Events, and Journal.**
 
+**Critical safety:**
+- NEVER create a draft unless the user clearly provides information for that category.
+- If the user says hello/bye/stop/not interested or shares unrelated chatter, DO NOT create drafts; reply briefly and end or redirect.
+- If details are missing or ambiguous, ask one clarifying question instead of inventing data.
+- If no category signals are present in the latest user message, do not call `create_draft_entry`.
+
 **Currency rule:**
 - The app uses Bangladeshi Taka (BDT) only. Record expense amounts in Taka.
 - If the user mentions USD/$/dollars, convert using 1 USD = 120 Taka and note the original amount+currency in the description (e.g., "Original: USD 10.00").
@@ -154,30 +160,68 @@ class DailyUpdateInterviewerStrategy(AIStrategy):
         )
         
         try:
+            # Detect categories up front to gate function calls
+            categories_mentioned = self._detect_categories(user_message)
+
+            # If the user is ending or uninterested, short-circuit with no drafts
+            if self._is_exit_intent(user_message):
+                farewell = "Got it. I'll stop here. Say the word if you want to add tasks, expenses, events, or a journal entry."
+                categories_covered.update(categories_mentioned)
+                return {
+                    "ai_response": farewell,
+                    "draft_entries": [],
+                    "categories_mentioned": list(categories_mentioned),
+                    "categories_covered": list(categories_covered),
+                    "is_complete": True,
+                    "raw_response": None
+                }
+
             # Call Gemini with function calling enabled
             response = await self._call_gemini_with_tools(service, messages)
-            
+
             # Extract any function calls (draft entries)
             draft_entries = self._extract_function_calls(response)
-            
-            # Detect categories mentioned in user message
-            categories_mentioned = self._detect_categories(user_message)
-            categories_covered.update(categories_mentioned)
-            
-            # Add categories from draft entries
+
+            # Add inferred expense category when missing or set to other
             for entry in draft_entries:
-                categories_covered.add(entry["category"])
-            
+                if entry.get("category") == "expense":
+                    details = entry.get("details", {}) or {}
+                    if not details.get("expense_category") or details.get("expense_category") == "other":
+                        inferred = self._infer_expense_category(
+                            [user_message, entry.get("summary", ""), details.get("description", "")]
+                        )
+                        if inferred:
+                            details["expense_category"] = inferred
+                            entry["details"] = details
+
+            # Gate drafts: keep only those matching categories mentioned in this turn
+            draft_entries = [
+                entry for entry in draft_entries
+                if entry.get("category") in categories_mentioned
+            ] if categories_mentioned else []
+
+            # Detect categories mentioned in user message
+            categories_covered.update(categories_mentioned)
+
+            # Add categories from accepted draft entries
+            for entry in draft_entries:
+                if entry.get("category"):
+                    categories_covered.add(entry["category"])
+
             # Get the AI's text response
             ai_response = self._extract_text_response(response)
-            
+
+            # If Gemini returned an empty/stock reply and no categories, steer the user
+            if not categories_mentioned and not draft_entries:
+                ai_response = "I can log tasks, expenses, events, or a journal entry. What would you like to add?"
+
             # Check if conversation is complete
             is_complete = self._check_completion(
                 categories_covered,
                 user_message,
                 ai_response
             )
-            
+
             return {
                 "ai_response": ai_response,
                 "draft_entries": draft_entries,
@@ -186,7 +230,7 @@ class DailyUpdateInterviewerStrategy(AIStrategy):
                 "is_complete": is_complete,
                 "raw_response": str(response) if kwargs.get("debug") else None
             }
-            
+
         except Exception as e:
             logger.error(f"Error in daily update conversation: {e}")
             return {
@@ -339,6 +383,34 @@ class DailyUpdateInterviewerStrategy(AIStrategy):
             categories.add("journal")
         
         return categories
+
+    def _infer_expense_category(self, texts: List[str]) -> Optional[str]:
+        """Heuristic categorization for expenses when the model omits a category."""
+        combined = " ".join(t or "" for t in texts).lower()
+        buckets = [
+            ("food", ["lunch", "dinner", "breakfast", "coffee", "meal", "restaurant", "cafe", "food", "snack", "pizza", "burger"]),
+            ("transport", ["uber", "taxi", "cab", "bus", "train", "ride", "grab", "pathao", "lyft", "fuel", "gas", "petrol", "parking"]),
+            ("entertainment", ["movie", "cinema", "netflix", "concert", "game", "gaming", "show", "event", "ticket"]),
+            ("bills", ["bill", "utility", "electric", "water", "internet", "wifi", "rent", "mobile", "phone", "gas bill"]),
+            ("shopping", ["store", "shopping", "mall", "clothes", "shoe", "apparel", "amazon", "flipkart", "daraz", "buy", "bought", "purchase"]),
+            ("health", ["doctor", "dentist", "pharmacy", "medicine", "med", "hospital", "clinic", "therapy"]),
+            ("education", ["course", "class", "tuition", "book", "textbook", "training", "exam", "college", "school", "university"]),
+            ("travel", ["flight", "plane", "hotel", "airbnb", "visa", "trip", "travel", "train ticket", "bus ticket"]),
+        ]
+        for label, kws in buckets:
+            if any(kw in combined for kw in kws):
+                return label
+        return None
+
+    def _is_exit_intent(self, text: str) -> bool:
+        """Lightweight check for end/stop/refusal so we don't create drafts."""
+        user_lower = text.lower()
+        end_phrases = [
+            "that's all", "that's it", "i'm done", "nothing else",
+            "no more", "we're done", "finish", "end", "bye", "thanks",
+            "not interested", "stop", "leave me alone", "go away"
+        ]
+        return any(phrase in user_lower for phrase in end_phrases)
     
     def _check_completion(
         self,
