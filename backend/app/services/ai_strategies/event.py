@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from fastapi import HTTPException, UploadFile
@@ -42,8 +42,17 @@ class EventTextStrategy(AIStrategy):
             raise HTTPException(status_code=500, detail=f"AI processing error: {exc}")
 
     def _build_prompt(self) -> str:
+        now = datetime.now()
+        tomorrow = now + timedelta(days=1)
+        # Calculate what day of week it is and when "next Friday" etc. would be
+        weekday_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        current_weekday = now.weekday()
+        
         return f"""
 You are an expert calendar assistant. Parse the given input and extract event information.
+
+CRITICAL: Today is {now.strftime("%A, %B %d, %Y")} and the current time is {now.strftime("%I:%M %p")}.
+Today's weekday index is {current_weekday} (0=Monday, 4=Friday, 6=Sunday).
 
 FIRST, determine if the input is related to an event, meeting, appointment, or calendar entry.
 If the input is NOT event-related (like greetings, random chat, questions, etc.), return:
@@ -56,10 +65,10 @@ If the input is NOT event-related (like greetings, random chat, questions, etc.)
 If the input IS event-related, return a valid JSON object with this structure:
 {{
     \"is_event_related\": true,
-    \"title\": string (required),
+    \"title\": string (required - extract from context, use activity/purpose as title),
     \"description\": string (optional),
-    \"start_time\": \"YYYY-MM-DDTHH:MM:SS\" (required if possible),
-    \"end_time\": \"YYYY-MM-DDTHH:MM:SS\" (required if possible),
+    \"start_time\": \"YYYY-MM-DDTHH:MM:SS\" (REQUIRED - you MUST calculate the actual date),
+    \"end_time\": \"YYYY-MM-DDTHH:MM:SS\" (REQUIRED - default to 1 hour after start_time),
     \"location\": string (optional),
     \"tags\": [list of strings] (optional),
     \"is_all_day\": bool (optional, default: false),
@@ -69,27 +78,35 @@ If the input IS event-related, return a valid JSON object with this structure:
     \"confidence\": float between 0 and 1
 }}
 
-Rules for event-related inputs:
-1. If title or time is not clear, return confidence < 0.5
-2. Always extract start/end time if mentioned (e.g., today, tomorrow, next week, 3pm, etc.)
-3. Use tags if hashtags or keywords are present
-4. Default is_all_day to false unless clearly all-day
-5. If the input is a question or greeting, mark is_event_related as false
+CRITICAL DATE/TIME PARSING RULES:
+1. You MUST convert relative dates to absolute dates. Examples based on today being {now.strftime("%A, %B %d, %Y")}:
+   - "today" = {now.strftime("%Y-%m-%d")}
+   - "tomorrow" = {tomorrow.strftime("%Y-%m-%d")}
+   - "next Friday" = Calculate the date of the NEXT Friday from today
+   - "this Friday" = This week's Friday
+   - "next week" = 7 days from today
+2. You MUST convert times like "7pm", "7:00 p.m.", "19:00" to 24-hour format in the ISO string
+3. If no end time is specified, set end_time to 1 hour after start_time
+4. If only a date is given with no time, default to 09:00:00 for start and 10:00:00 for end
+5. ALWAYS return start_time and end_time as complete ISO datetime strings
 
-Examples of event-related inputs:
-- \"Lunch with Sarah at 1pm tomorrow\"
-- \"Doctor appointment on Friday at 10am\"
-- \"Project meeting next Monday 3-4pm\"
-- \"Vacation from July 1st to July 5th\"
-- \"All-day conference on 15th\"
+TITLE EXTRACTION RULES:
+1. If input says "add an event... [activity]", the activity IS the title
+2. Examples: "add an event texting" -> title: "Texting"
+3. Capitalize the first letter of the title
+
+Examples of event-related inputs and their parsing:
+- \"add an event next Friday 7:00 p.m. texting\" -> title: \"Texting\", start_time calculated for next Friday at 19:00
+- \"Lunch with Sarah at 1pm tomorrow\" -> title: \"Lunch with Sarah\"
+- \"Doctor appointment on Friday at 10am\" -> title: \"Doctor appointment\"
+- \"Project meeting next Monday 3-4pm\" -> title: \"Project meeting\", with correct start/end
 
 Examples of NON event-related inputs:
 - \"hi there\"
 - \"what's the weather\"
 - \"tell me a joke\"
-- General conversation
 
-Current date and time: {datetime.now().isoformat()}
+Current date and time: {now.isoformat()}
 """
 
     def _normalize_result(self, result: Optional[Dict[str, Any]]) -> Dict[str, Any]:

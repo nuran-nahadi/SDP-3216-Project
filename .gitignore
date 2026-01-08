@@ -73,6 +73,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Exception: Allow src/lib in Next.js app
+!next-app/src/lib/
+
 # Virtual Environments
 .env
 .venv
@@ -197,3 +200,5 @@ docker-compose.override.yml
 *.backup
 *.bak
 *.orig
+.kiro/
+frontend/

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -35,12 +36,26 @@ class Settings(BaseSettings):
     google_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
 
+    # AI Rate Limiting
+    ai_rate_limit_enabled: bool = True
+    ai_rate_limit_requests_per_window: int = 2
+    ai_rate_limit_window_seconds: int = 60
+    daily_update_rate_limit_requests: int = 2
+    daily_update_rate_limit_window_seconds: int = 60
+
     # Email Configuration (Optional)
     smtp_host: Optional[str] = None
     smtp_port: Optional[int] = None
     smtp_username: Optional[str] = None
     smtp_password: Optional[str] = None
     email_from: Optional[str] = None
+
+    # Resend Configuration (Email)
+    resend_api_key: Optional[str] = None
+    resend_from_email: str = "notification@sdp-lab.fahiim.me"
+    
+    # Frontend URL
+    frontend_url: str = "http://localhost:3000"
 
     # Development Settings
     debug: bool = False
@@ -55,7 +70,8 @@ class Settings(BaseSettings):
         return f"postgresql://{self.db_username}:{self.db_password}@{self.db_hostname}:{self.db_port}/{self.db_name}"
 
     class Config:
-        env_file = ".env"
+        # Look for .env in the backend directory
+        env_file = str(Path(__file__).parent.parent.parent / ".env")
         extra = "forbid"  # This prevents extra fields from being allowed
 
 

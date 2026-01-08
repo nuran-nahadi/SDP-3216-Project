@@ -82,7 +82,7 @@ class UserProfileUpdate(BaseModel):
 # User Preferences Models
 class UserPreferencesBase(BaseModel):
     default_task_priority: TaskPriority = TaskPriority.medium
-    default_expense_currency: str = "USD"
+    default_expense_currency: str = "Taka"
     notification_settings: Optional[dict] = None
     theme: Theme = Theme.auto
     language: str = "en"
@@ -132,7 +132,8 @@ class UserPreferencesUpdate(BaseModel):
 
 # Legacy schemas for backward compatibility
 class UserCreate(BaseModel):
-    full_name: str
+    first_name: str
+    last_name: str
     username: str
     email: str
     password: str
@@ -141,8 +142,15 @@ class UserCreate(BaseModel):
         pass
 
 
-class UserUpdate(UserCreate):
-    pass
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+    class Config(BaseConfig):
+        pass
 
 
 class UserOut(BaseModel):

@@ -152,6 +152,68 @@ class JournalService:
         }
     
     @staticmethod
+    async def parse_voice_with_ai(db: Session, user: User, audio_file) -> dict:
+        """Parse voice recording into journal entry data using AI"""
+        from app.services.ai_service import ai_service
+        import tempfile
+        import os
+        from pydub import AudioSegment
+        import speech_recognition as sr
+        
+        temp_audio_path = ""
+        wav_path = ""
+        
+        try:
+            # Read audio data
+            audio_data = await audio_file.read()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+                temp_file.write(audio_data)
+                temp_audio_path = temp_file.name
+            
+            # Convert to WAV format
+            audio = AudioSegment.from_file(temp_audio_path)
+            wav_path = temp_audio_path.replace(".wav", "_converted.wav")
+            audio.export(wav_path, format="wav")
+            
+            # Transcribe audio
+            recognizer = sr.Recognizer()
+            with sr.AudioFile(wav_path) as source:
+                recorded = recognizer.record(source)
+            
+            try:
+                text = recognizer.recognize_google(recorded)
+            except sr.UnknownValueError:
+                try:
+                    text = recognizer.recognize_sphinx(recorded)
+                except Exception:
+                    raise HTTPException(status_code=400, detail="Could not transcribe audio")
+            
+            # Parse the transcribed text
+            parsed_data = JournalService.parse_natural_language(text)
+            
+            return {
+                "success": True,
+                "data": {
+                    **parsed_data,
+                    "content": text,
+                    "transcribed_text": text
+                },
+                "message": "Voice parsed successfully",
+                "meta": {"timestamp": datetime.now().isoformat()}
+            }
+            
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Voice processing error: {exc}")
+        finally:
+            # Clean up temp files
+            if temp_audio_path and os.path.exists(temp_audio_path):
+                os.unlink(temp_audio_path)
+            if wav_path and os.path.exists(wav_path):
+                os.unlink(wav_path)
+    
+    @staticmethod
     def analyze_entries(db: Session, user: User, entry_ids: Optional[List[UUID]] = None) -> dict:
         """Trigger AI analysis for journal entries"""
         query = db.query(JournalEntry).filter(JournalEntry.user_id == user.id)

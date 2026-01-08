@@ -38,7 +38,7 @@ CREATE TABLE user_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   default_task_priority task_priorities NOT NULL DEFAULT 'medium',
-  default_expense_currency TEXT NOT NULL DEFAULT 'USD',
+  default_expense_currency TEXT NOT NULL DEFAULT 'Taka',
   notification_settings JSONB,
   theme themes NOT NULL DEFAULT 'auto',
   language TEXT NOT NULL DEFAULT 'en',
@@ -446,4 +446,56 @@ INSERT INTO journal_entries (
   '2025-07-02T10:00:00+06:00'
 );
 
+
+-- =====================================================
+-- DAILY UPDATE AGENT TABLES
+-- For the Proactive Interviewer feature
+-- See: sql/daily_update_migration.sql for full schema
+-- =====================================================
+
+-- Category types for pending updates
+DO $$ BEGIN
+    CREATE TYPE pending_update_categories AS ENUM ('task', 'expense', 'event', 'journal');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Status types for pending updates
+DO $$ BEGIN
+    CREATE TYPE pending_update_statuses AS ENUM ('pending', 'accepted', 'rejected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Daily update sessions table
+CREATE TABLE IF NOT EXISTS daily_update_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    categories_covered JSONB NOT NULL DEFAULT '[]'::jsonb,
+    conversation_history JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Pending updates staging table
+CREATE TABLE IF NOT EXISTS pending_updates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category pending_update_categories NOT NULL,
+    summary VARCHAR(255) NOT NULL,
+    raw_text TEXT,
+    structured_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    status pending_update_statuses NOT NULL DEFAULT 'pending',
+    session_id UUID REFERENCES daily_update_sessions(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes for daily update tables
+CREATE INDEX IF NOT EXISTS idx_daily_update_sessions_user_active ON daily_update_sessions(user_id, is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_pending_updates_user_status ON pending_updates(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_pending_updates_session ON pending_updates(session_id) WHERE session_id IS NOT NULL;
 

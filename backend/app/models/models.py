@@ -34,7 +34,7 @@ class UserPreferences(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False)
     default_task_priority = Column(Enum("low", "medium", "high", name="task_priorities"), server_default="medium", nullable=False)
-    default_expense_currency = Column(String, server_default="USD", nullable=False)
+    default_expense_currency = Column(String, server_default="Taka", nullable=False)
     notification_settings = Column(String, nullable=True)  # JSON stored as string
     theme = Column(Enum("light", "dark", "auto", name="themes"), server_default="auto", nullable=False)
     language = Column(String, server_default="en", nullable=False)

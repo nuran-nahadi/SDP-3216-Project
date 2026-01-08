@@ -28,6 +28,14 @@ from app.schemas.expenses import (
     TotalSpendData,
 )
 from app.utils.upload import upload_receipt_image
+from app.services.ai_rate_limit import ai_rate_limit
+
+
+def _facade_user_key(instance, *_args, **_kwargs) -> str:
+    """Build a stable rate-limit key using the bound user's id."""
+    user = getattr(instance, "_user", None)
+    user_id = getattr(user, "id", "anonymous")
+    return f"user:{user_id}"
 
 
 class ExpenseFacade:
@@ -97,7 +105,7 @@ class ExpenseFacade:
         try:
             payload = {
                 "amount": expense_data.amount,
-                "currency": expense_data.currency,
+                "currency": "Taka",
                 "category": expense_data.category,
                 "subcategory": expense_data.subcategory,
                 "merchant": expense_data.merchant,
@@ -118,7 +126,7 @@ class ExpenseFacade:
                 "data": ExpenseOut.model_validate(expense),
                 "message": "Expense created successfully",
             }
-        except Exception as exc:  # pragma: no cover - defensive rollback
+        except Exception as exc:  
             self._repository.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -153,6 +161,8 @@ class ExpenseFacade:
             update_data["tags"] = (
                 json.dumps(update_data["tags"]) if update_data["tags"] else None
             )
+        if "currency" in update_data:
+            update_data["currency"] = "Taka"
 
         try:
             updated = self._repository.update(expense, update_data)
@@ -441,6 +451,7 @@ class ExpenseFacade:
     # ------------------------------------------------------------------
     # AI powered helpers
     # ------------------------------------------------------------------
+    @ai_rate_limit(feature="expenses:parse_text", key_func=_facade_user_key)
     async def parse_text_with_ai(self, text: str) -> dict:
         from app.services.ai_service import ai_service
 
@@ -466,24 +477,13 @@ class ExpenseFacade:
                     "message": "Low confidence in parsing. Please provide more details.",
                 }
 
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
-                "message": "Expense created successfully from text",
+                "message": "Expense parsed successfully from text",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {
@@ -494,6 +494,7 @@ class ExpenseFacade:
                 "message": f"Error parsing text: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:parse_receipt", key_func=_facade_user_key)
     async def parse_receipt_with_ai(self, image_file: UploadFile) -> dict:
         from app.services.ai_service import ai_service
 
@@ -508,44 +509,13 @@ class ExpenseFacade:
                     "message": "Low confidence in receipt parsing. Please verify the image.",
                 }
 
-            receipt_url = None
-            try:
-                await image_file.seek(0)
-                receipt_url = await upload_receipt_image(image_file)
-            except Exception:  # pragma: no cover - upload optional
-                receipt_url = None
-
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
-
-            if receipt_url and result["success"]:
-                expense_obj = self._repository.get_by_id(
-                    self._user.id,
-                    result["data"].id,
-                )
-                if expense_obj:
-                    updated = self._repository.update(
-                        expense_obj,
-                        {"receipt_url": receipt_url},
-                    )
-                    result["data"] = ExpenseOut.model_validate(updated)
-
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
-                "message": "Expense created successfully from receipt",
+                "message": "Receipt parsed successfully",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {
@@ -556,6 +526,7 @@ class ExpenseFacade:
                 "message": f"Error parsing receipt: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:parse_voice", key_func=_facade_user_key)
     async def parse_voice_with_ai(self, audio_file: UploadFile) -> dict:
         from app.services.ai_service import ai_service
 
@@ -571,25 +542,14 @@ class ExpenseFacade:
                     "message": "Low confidence in voice parsing. Please speak more clearly.",
                 }
 
-            expense_create = ExpenseCreate(
-                amount=parsed_data["amount"],
-                currency=parsed_data.get("currency", "Taka"),
-                category=parsed_data["category"],
-                subcategory=parsed_data.get("subcategory"),
-                merchant=parsed_data.get("merchant"),
-                description=parsed_data.get("description"),
-                date=datetime.fromisoformat(parsed_data["date"]),
-                payment_method=parsed_data.get("payment_method"),
-                tags=parsed_data.get("tags", []),
-            )
-            result = self.create_expense(expense_create)
+            # Return parsed data without creating the expense
+            # The frontend will create the expense after user reviews and confirms
             return {
                 "success": True,
-                "data": result["data"],
-                "parsed_data": parsed_data,
+                "data": parsed_data,
                 "confidence": parsed_data.get("confidence", 0.8),
                 "transcribed_text": parsed_data.get("transcribed_text"),
-                "message": "Expense created successfully from voice",
+                "message": "Voice parsed successfully",
             }
         except Exception as exc:  # pragma: no cover - AI fallback
             return {
@@ -601,12 +561,14 @@ class ExpenseFacade:
                 "message": f"Error parsing voice: {exc}",
             }
 
+    @ai_rate_limit(feature="expenses:insights", key_func=_facade_user_key)
     async def get_ai_insights(self, days: int = 30) -> dict:
         from app.services.ai_service import ai_service
 
         try:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=days)
+            # Always analyze the current calendar month so the dashboard reflects monthly spend
+            end_date = datetime.now().replace(hour=23, minute=59, second=59, microsecond=999_999)
+            start_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             expenses = self._repository.expenses_for_ai(
                 self._user.id,
                 start_date=start_date,
@@ -773,9 +735,14 @@ class ExpenseFacade:
 
     def get_category_trend_dashboard(self, months: int = 6) -> dict:
         now = datetime.now()
-        end_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        start_year = now.year
-        start_month = now.month - months
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if current_month_start.month == 12:
+            end_date = current_month_start.replace(year=current_month_start.year + 1, month=1)
+        else:
+            end_date = current_month_start.replace(month=current_month_start.month + 1)
+
+        start_year = current_month_start.year
+        start_month = current_month_start.month - (months - 1)
         while start_month <= 0:
             start_month += 12
             start_year -= 1

@@ -250,10 +250,10 @@ def export_expenses(
 # AI-powered endpoints
 @router.post(
     "/ai/parse-text",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AIExpenseParseResponse,
     summary="Parse expense from text using AI",
-    description="Parse natural language text into expense data using Gemini AI"
+    description="Parse natural language text into expense data using Gemini AI (does not create expense)"
 )
 async def parse_text_with_ai(
     request: AIExpenseParseRequest,
@@ -265,10 +265,10 @@ async def parse_text_with_ai(
 
 @router.post(
     "/ai/parse-receipt",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AIExpenseParseResponse,
     summary="Parse expense from receipt image using AI",
-    description="Parse receipt image into expense data using Gemini AI"
+    description="Parse receipt image into expense data using Gemini AI (does not create expense)"
 )
 async def parse_receipt_with_ai(
     file: UploadFile = File(..., description="Receipt image file (JPG, PNG, etc.)"),
@@ -287,10 +287,10 @@ async def parse_receipt_with_ai(
 
 @router.post(
     "/ai/parse-voice",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=AIExpenseParseResponse,
     summary="Parse expense from voice recording using AI",
-    description="Parse voice recording into expense data using speech recognition and Gemini AI"
+    description="Parse voice recording into expense data using speech recognition and Gemini AI (does not create expense)"
 )
 async def parse_voice_with_ai(
     file: UploadFile = File(..., description="Audio file (MP3, WAV, M4A, etc.)"),
@@ -298,11 +298,11 @@ async def parse_voice_with_ai(
 ):
     """Parse expense from voice recording using AI"""
     # Validate file type
-    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a']
+    allowed_audio_types = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a', 'audio/webm']
     if not file.content_type or file.content_type not in allowed_audio_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File must be an audio file (MP3, WAV, M4A)"
+            detail="File must be an audio file (MP3, WAV, M4A, WebM)"
         )
 
     return await facade.parse_voice_with_ai(file)

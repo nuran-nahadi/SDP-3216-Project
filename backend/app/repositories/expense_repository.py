@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from uuid import UUID
 
-from sqlalchemy import and_, desc, extract, func, or_
+from sqlalchemy import and_, case, desc, extract, func, or_
 from sqlalchemy.orm import Session
 
 from app.models.models import Expense
@@ -56,8 +56,10 @@ class ExpenseRepository:
             )
 
         total_count = query.count()
+        today = datetime.now().date()
+        is_today = case((func.date(Expense.date) == today, 1), else_=0)
         expenses = (
-            query.order_by(desc(Expense.date))
+            query.order_by(desc(is_today), desc(Expense.date), desc(Expense.created_at))
             .offset((page - 1) * limit)
             .limit(limit)
             .all()

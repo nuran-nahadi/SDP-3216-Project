@@ -37,16 +37,8 @@ class AuthService:
         
         hashed_password = get_password_hash(user.password)
         
-        # Split full_name into first_name and last_name
-        name_parts = user.full_name.strip().split(' ', 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ""
-        
-        # Create user data without full_name, but with split names
+        # Create user data with hashed password
         user_data = user.model_dump()
-        user_data.pop('full_name')  # Remove full_name
-        user_data['first_name'] = first_name
-        user_data['last_name'] = last_name
         user_data['hashed_password'] = hashed_password
         user_data.pop('password')  # Remove plain password
         
@@ -55,7 +47,7 @@ class AuthService:
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
-            return ResponseHandler.create_success(db_user.username, db_user.id, db_user)
+            return ResponseHandler.create_success(db_user.username, str(db_user.id), db_user)
         except IntegrityError as e:
             db.rollback()
             # This should rarely happen due to the check above, but it's a safety net
@@ -78,12 +70,17 @@ class AuthService:
 
     @staticmethod
     async def login(user_credentials: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-        user = db.query(User).filter(User.username == user_credentials.username).first()
+        # Support login with either username or email
+        user = db.query(User).filter(
+            (User.username == user_credentials.username) | 
+            (User.email == user_credentials.username)
+        ).first()
+        
         if not user:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid username/email or password")
 
         if not verify_password(user_credentials.password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid username/email or password")
 
         return await get_user_token(id=user.id)
 

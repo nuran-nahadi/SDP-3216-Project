@@ -156,8 +156,7 @@ class AIEventParseRequest(BaseModel):
 class AIEventParseResponse(BaseModel):
     """Response schema for AI-parsed event"""
     success: bool = True
-    data: Optional[EventOut] = None
-    parsed_data: Optional[dict] = None
+    data: Optional[dict] = None  # Changed from EventOut to dict since we return parsed data, not a created event
     confidence: Optional[float] = None
     transcribed_text: Optional[str] = None  # For voice inputs
     message: str = "Text parsed successfully"

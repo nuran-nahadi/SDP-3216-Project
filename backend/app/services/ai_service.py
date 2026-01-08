@@ -33,7 +33,7 @@ class GeminiAIService:
             raise ValueError("Google API key not configured")
 
         genai.configure(api_key=settings.google_api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        self.model = genai.GenerativeModel("gemini-3-flash-preview")
         self.recognizer = sr.Recognizer()
         self._strategies: Dict[str, AIStrategy] = {}
         self._register_default_strategies()
@@ -134,4 +134,3 @@ class GeminiAIService:
 
 
 ai_service = GeminiAIService()
-
