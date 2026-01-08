@@ -30,24 +30,31 @@ class InMemoryRateLimiter:
         self._lock = threading.Lock()
         self._buckets: Dict[str, tuple[int, float]] = {}
 
+    
+    
+    
     def check(self, key: str) -> Optional[float]:
         """Return retry-after seconds when blocked else None."""
         if self.requests <= 0:
-            return None  # Unlimited window when threshold is non-positive
+            return None  
 
         now = time.monotonic()
         with self._lock:
             count, window_start = self._buckets.get(key, (0, now))
             elapsed = now - window_start
+            
+            # reset
             if elapsed >= self.window_seconds:
                 count = 0
                 window_start = now
                 elapsed = 0.0
 
+            # limit
             if count >= self.requests:
                 retry_after = self.window_seconds - elapsed
                 return max(0.0, retry_after)
 
+            # ++
             self._buckets[key] = (count + 1, window_start)
             return None
 
@@ -61,6 +68,12 @@ class RateLimitManager:
         self._limiters: Dict[str, InMemoryRateLimiter] = {}
         self._lock = threading.Lock()
 
+    
+    # _limiters = {
+    #       "expenses:parse_text": InMemoryRateLimiter(10, 60),
+    #       "daily_update:chat":   InMemoryRateLimiter(20, 300),
+    # }
+    
     def _limiter(
         self,
         feature: str,
@@ -76,6 +89,10 @@ class RateLimitManager:
                 self._limiters[feature] = limiter
             return limiter
 
+    
+    
+    
+    
     def decorator(
         self,
         feature: str,
@@ -87,7 +104,8 @@ class RateLimitManager:
         requests: Optional[int] = None,
         window_seconds: Optional[int] = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        limiter = self._limiter(feature, requests, window_seconds)
+        
+        limiter = self._limiter(feature, requests, window_seconds)      # picks the feature specific limiter 
 
         def _key_builder(func: Callable[..., Any]) -> Callable[[tuple[Any, ...], Dict[str, Any]], str]:
             signature = inspect.signature(func)
@@ -109,10 +127,14 @@ class RateLimitManager:
 
             return _builder
 
+        
+        #  applied per request 
         def _decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             key_builder = _key_builder(func)
 
             def _enforce(args: tuple[Any, ...], kwargs: Dict[str, Any]) -> None:
+                
+                
                 key = key_builder(args, kwargs)
                 retry_after = limiter.check(key)
                 if retry_after is not None:
@@ -123,6 +145,8 @@ class RateLimitManager:
                         retry_after,
                     )
 
+            
+            
             if inspect.iscoroutinefunction(func):
 
                 @wraps(func)
